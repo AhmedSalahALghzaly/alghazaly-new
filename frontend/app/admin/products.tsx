@@ -693,6 +693,14 @@ export default function ProductsAdmin() {
           </View>
         </View>
       </Modal>
+
+      {/* Toast Component */}
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+      />
     </SafeAreaView>
   );
 }
