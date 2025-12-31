@@ -90,35 +90,7 @@ export default function ProductsAdmin() {
     }
   };
 
-  const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
-        base64: true,
-      });
-
-      if (!result.canceled && result.assets[0].base64) {
-        const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
-        setImages((prev) => [...prev, base64Image]);
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-    }
-  };
-
-  const addImageUrl = () => {
-    if (imageUrl.trim()) {
-      setImages((prev) => [...prev, imageUrl.trim()]);
-      setImageUrl('');
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
+ 
 
   const handleSave = async () => {
     if (!name.trim() || !nameAr.trim() || !price || !sku || !selectedBrandId || !selectedCategoryId) {
