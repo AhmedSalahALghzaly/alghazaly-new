@@ -34,14 +34,25 @@ export default function LoginScreen() {
 
   const [loading, setLoading] = useState(false);
   const [processingAuth, setProcessingAuth] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Reactive navigation - auto-redirect when authenticated
+  // Track component mount state
   useEffect(() => {
-    if (hasHydrated && isAuthenticated) {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  // Reactive navigation - auto-redirect when authenticated (with safety delay)
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated && isMounted) {
       console.log('Login screen: User already authenticated, redirecting...');
-      router.replace('/(tabs)');
+      // Use setTimeout to ensure router is ready
+      const timer = setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, hasHydrated]);
+  }, [isAuthenticated, hasHydrated, isMounted]);
 
   // Handle initial URL (cold start)
   useEffect(() => {
