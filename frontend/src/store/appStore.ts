@@ -178,12 +178,13 @@ interface AppState {
   setLastSyncTime: (time: number) => void;
   
   // Cart Actions
-  addToCart: (productId: string, quantity?: number) => void;
+  addToCart: (item: CartItemData | string, quantity?: number) => void;
   addToLocalCart: (item: { product_id: string; quantity: number; product?: any }) => void;
   updateCartItem: (productId: string, quantity: number) => void;
-  removeFromCart: (productId: string) => void;
+  removeFromCart: (productId: string, voidBundle?: boolean) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+  voidBundleDiscount: (bundleGroupId: string) => void;
   
   // Notification Actions
   addNotification: (notification: Notification) => void;
