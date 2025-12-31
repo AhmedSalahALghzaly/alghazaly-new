@@ -12,12 +12,17 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const hasHydrated = useHasHydrated();
-  const theme = useAppStore((state) => state.theme);
+  const user = useAppStore((state) => state.user);
   const currentMood = useAppStore((state) => state.currentMood);
 
   useEffect(() => {
     // Don't do anything until hydration is complete
-    if (!hasHydrated) return;
+    if (!hasHydrated) {
+      console.log('Auth Guard: Waiting for hydration...');
+      return;
+    }
+
+    console.log('Auth Guard: Hydrated, checking auth...', { isAuthenticated, user: user?.email, segments });
 
     const inAuthGroup = segments[0] === 'login';
     const inProtectedRoute = segments[0] === 'admin' || segments[0] === 'owner' || 
@@ -26,13 +31,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // If user is authenticated and on login page, redirect to home
     if (isAuthenticated && inAuthGroup) {
+      console.log('Auth Guard: User authenticated, redirecting from login to home');
       router.replace('/(tabs)');
     }
     // If user is not authenticated and trying to access protected routes
     else if (!isAuthenticated && inProtectedRoute) {
+      console.log('Auth Guard: User not authenticated, redirecting to login');
       router.replace('/login');
     }
-  }, [isAuthenticated, hasHydrated, segments]);
+  }, [isAuthenticated, hasHydrated, segments, user]);
 
   // Show loading screen while hydrating
   if (!hasHydrated) {
