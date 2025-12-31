@@ -1,23 +1,85 @@
 /**
- * Customers Management Screen
- * View and manage all customers
+ * Customers Management Screen - With Toggle Logic
  */
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../../src/store/appStore';
+import { customerApi } from '../../src/services/api';
 import { ListItemSkeleton } from '../../src/components/ui/Skeleton';
+
+type SortMode = 'most_purchased' | 'highest_value';
 
 export default function CustomersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const language = useAppStore((state) => state.language);
   const customers = useAppStore((state) => state.customers);
+  const setCustomers = useAppStore((state) => state.setCustomers);
   const isRTL = language === 'ar';
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sortMode, setSortMode] = useState<SortMode>('most_purchased');
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const res = await customerApi.getAll();
+      setCustomers(res.data?.customers || res.data || []);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchCustomers();
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  // Sort customers based on mode
+  const sortedCustomers = useMemo(() => {
+    const customerList = [...customers];
+    
+    if (sortMode === 'most_purchased') {
+      return customerList.sort((a: any, b: any) => {
+        const aCount = a.order_count || a.total_orders || 0;
+        const bCount = b.order_count || b.total_orders || 0;
+        return bCount - aCount;
+      });
+    } else {
+      return customerList.sort((a: any, b: any) => {
+        const aValue = a.total_spent || a.total_value || 0;
+        const bValue = b.total_spent || b.total_value || 0;
+        return bValue - aValue;
+      });
+    }
+  }, [customers, sortMode]);
+
+  // Calculate totals
+  const totals = useMemo(() => ({
+    totalCustomers: customers.length,
+    totalOrders: customers.reduce((sum: number, c: any) => sum + (c.order_count || c.total_orders || 0), 0),
+    totalValue: customers.reduce((sum: number, c: any) => sum + (c.total_spent || c.total_value || 0), 0),
+  }), [customers]);
 
   return (
     <View style={styles.container}>
@@ -29,6 +91,9 @@ export default function CustomersScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFF" />
+        }
       >
         {/* Header */}
         <View style={[styles.header, isRTL && styles.headerRTL]}>
@@ -43,9 +108,76 @@ export default function CustomersScreen() {
           </View>
         </View>
 
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Ionicons name="people" size={24} color="#3B82F6" />
+            <Text style={styles.statValue}>{totals.totalCustomers}</Text>
+            <Text style={styles.statLabel}>{isRTL ? 'العملاء' : 'Customers'}</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Ionicons name="receipt" size={24} color="#10B981" />
+            <Text style={styles.statValue}>{totals.totalOrders}</Text>
+            <Text style={styles.statLabel}>{isRTL ? 'الطلبات' : 'Orders'}</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Ionicons name="cash" size={24} color="#F59E0B" />
+            <Text style={styles.statValue}>{(totals.totalValue / 1000).toFixed(1)}K</Text>
+            <Text style={styles.statLabel}>{isRTL ? 'ج.م' : 'EGP'}</Text>
+          </View>
+        </View>
+
+        {/* Sort Toggle */}
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              sortMode === 'most_purchased' && styles.toggleActive,
+            ]}
+            onPress={() => setSortMode('most_purchased')}
+          >
+            <Ionicons 
+              name="cart" 
+              size={18} 
+              color={sortMode === 'most_purchased' ? '#FFF' : 'rgba(255,255,255,0.6)'} 
+            />
+            <Text style={[
+              styles.toggleText,
+              sortMode === 'most_purchased' && styles.toggleTextActive,
+            ]}>
+              {isRTL ? 'الأكثر شراءً' : 'Most Purchased'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              sortMode === 'highest_value' && styles.toggleActive,
+            ]}
+            onPress={() => setSortMode('highest_value')}
+          >
+            <Ionicons 
+              name="trending-up" 
+              size={18} 
+              color={sortMode === 'highest_value' ? '#FFF' : 'rgba(255,255,255,0.6)'} 
+            />
+            <Text style={[
+              styles.toggleText,
+              sortMode === 'highest_value' && styles.toggleTextActive,
+            ]}>
+              {isRTL ? 'أعلى قيمة' : 'Highest Value'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Customer List */}
         <View style={styles.listContainer}>
-          {customers.length === 0 ? (
+          {loading ? (
+            [1, 2, 3, 4, 5].map(i => (
+              <View key={i} style={styles.skeletonCard}>
+                <ListItemSkeleton />
+              </View>
+            ))
+          ) : sortedCustomers.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="people-outline" size={64} color="rgba(255,255,255,0.5)" />
               <Text style={styles.emptyText}>
@@ -53,16 +185,42 @@ export default function CustomersScreen() {
               </Text>
             </View>
           ) : (
-            customers.map((customer: any) => (
-              <TouchableOpacity key={customer.id} style={styles.customerCard}>
+            sortedCustomers.map((customer: any, index: number) => (
+              <TouchableOpacity key={customer.id || index} style={styles.customerCard}>
                 <BlurView intensity={15} tint="light" style={styles.cardBlur}>
+                  {/* Rank Badge */}
+                  <View style={[
+                    styles.rankBadge,
+                    index === 0 && styles.rankGold,
+                    index === 1 && styles.rankSilver,
+                    index === 2 && styles.rankBronze,
+                  ]}>
+                    <Text style={styles.rankText}>#{index + 1}</Text>
+                  </View>
+
                   <View style={styles.customerAvatar}>
                     <Ionicons name="person" size={24} color="#3B82F6" />
                   </View>
+                  
                   <View style={styles.customerInfo}>
                     <Text style={styles.customerName}>{customer.name || customer.email}</Text>
                     <Text style={styles.customerEmail}>{customer.email}</Text>
+                    <View style={styles.customerStats}>
+                      <View style={styles.customerStat}>
+                        <Ionicons name="cart" size={12} color="#10B981" />
+                        <Text style={styles.customerStatText}>
+                          {customer.order_count || customer.total_orders || 0} {isRTL ? 'طلبات' : 'orders'}
+                        </Text>
+                      </View>
+                      <View style={styles.customerStat}>
+                        <Ionicons name="cash" size={12} color="#F59E0B" />
+                        <Text style={styles.customerStatText}>
+                          {(customer.total_spent || customer.total_value || 0).toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
+
                   <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
                 </BlurView>
               </TouchableOpacity>
@@ -86,13 +244,31 @@ const styles = StyleSheet.create({
   headerTitle: { flex: 1, fontSize: 24, fontWeight: '700', color: '#FFF' },
   headerBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   headerBadgeText: { color: '#FFF', fontWeight: '600' },
-  listContainer: { marginTop: 16 },
-  customerCard: { marginBottom: 12, borderRadius: 12, overflow: 'hidden' },
+  statsRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  statBox: { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: 16, alignItems: 'center' },
+  statValue: { fontSize: 24, fontWeight: '700', color: '#FFF', marginTop: 8 },
+  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
+  toggleContainer: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 4, marginTop: 20 },
+  toggleButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 10, gap: 6 },
+  toggleActive: { backgroundColor: 'rgba(59,130,246,0.8)' },
+  toggleText: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '600' },
+  toggleTextActive: { color: '#FFF' },
+  listContainer: { marginTop: 20 },
+  skeletonCard: { marginBottom: 12 },
+  customerCard: { marginBottom: 12, borderRadius: 16, overflow: 'hidden' },
   cardBlur: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'rgba(255,255,255,0.1)' },
+  rankBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  rankGold: { backgroundColor: 'rgba(234,179,8,0.5)' },
+  rankSilver: { backgroundColor: 'rgba(156,163,175,0.5)' },
+  rankBronze: { backgroundColor: 'rgba(180,83,9,0.5)' },
+  rankText: { fontSize: 10, fontWeight: '700', color: '#FFF' },
   customerAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(59,130,246,0.2)', alignItems: 'center', justifyContent: 'center' },
   customerInfo: { flex: 1, marginLeft: 12 },
   customerName: { fontSize: 16, fontWeight: '600', color: '#FFF' },
-  customerEmail: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  customerEmail: { fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  customerStats: { flexDirection: 'row', marginTop: 8, gap: 16 },
+  customerStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  customerStatText: { fontSize: 11, color: 'rgba(255,255,255,0.8)' },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
   emptyText: { color: 'rgba(255,255,255,0.5)', fontSize: 16, marginTop: 16 },
 });
