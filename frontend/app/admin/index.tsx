@@ -11,6 +11,7 @@ import { Header } from '../../src/components/Header';
 const ADMIN_EMAILS = [
   'ahmed.salah.ghazaly.91@gmail.com',
   'ahmed.salah.mohamed.ai2025@gmail.com',
+  'pc.2025.ai@gmail.com', // Primary owner
 ];
 
 interface AdminSection {
