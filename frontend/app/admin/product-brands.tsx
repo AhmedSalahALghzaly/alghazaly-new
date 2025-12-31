@@ -26,8 +26,12 @@ export default function ProductBrandsAdmin() {
   const [nameAr, setNameAr] = useState('');
   const [countryOfOrigin, setCountryOfOrigin] = useState('');
   const [countryOfOriginAr, setCountryOfOriginAr] = useState('');
-  const [logoImage, setLogoImage] = useState<string | null>(null);
-  const [logoUrl, setLogoUrl] = useState('');
+  const [logoImage, setLogoImage] = useState<string>('');
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
 
   useEffect(() => {
     fetchBrands();
@@ -44,28 +48,24 @@ export default function ProductBrandsAdmin() {
     }
   };
 
-  const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
-        base64: true,
-      });
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
 
-      if (!result.canceled && result.assets[0].base64) {
-        setLogoImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
-        setLogoUrl('');
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-    }
+  const resetForm = () => {
+    setName('');
+    setNameAr('');
+    setCountryOfOrigin('');
+    setCountryOfOriginAr('');
+    setLogoImage('');
+    setError('');
   };
 
   const handleSave = async () => {
     if (!name.trim() || !nameAr.trim()) {
-      setError(language === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+      showToast(language === 'ar' ? 'يرجى إدخال الاسم بالإنجليزية والعربية' : 'Please enter name in both languages', 'error');
       return;
     }
 
