@@ -18,6 +18,7 @@ import { Header } from '../../src/components/Header';
 import { CategoryCard } from '../../src/components/CategoryCard';
 import { OfferSlider } from '../../src/components/OfferSlider';
 import { DynamicOfferSlider } from '../../src/components/DynamicOfferSlider';
+import { InteractiveCarSelector } from '../../src/components/InteractiveCarSelector';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useAppStore } from '../../src/store/appStore';
