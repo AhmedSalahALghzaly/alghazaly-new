@@ -25,6 +25,9 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { Header } from '../../src/components/Header';
 import { promotionApi, bundleOfferApi, productApi, carModelApi } from '../../src/services/api';
+import { ImageUploader } from '../../src/components/ui/ImageUploader';
+import { Toast } from '../../src/components/ui/FormFeedback';
+import { DraggablePromotionList } from '../../src/components/ui/DraggablePromotionList';
 
 interface Promotion {
   id: string;
