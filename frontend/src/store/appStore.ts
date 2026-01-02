@@ -3,8 +3,51 @@
  * Advanced Owner Interface - Complete State Management
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+
+// Web-safe storage wrapper that handles SSR gracefully
+const createWebSafeStorage = (): StateStorage => {
+  // For SSR (no window), return a no-op storage
+  if (typeof window === 'undefined') {
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  
+  // On web, use localStorage
+  if (Platform.OS === 'web') {
+    return {
+      getItem: (name) => {
+        try {
+          return localStorage.getItem(name);
+        } catch {
+          return null;
+        }
+      },
+      setItem: (name, value) => {
+        try {
+          localStorage.setItem(name, value);
+        } catch {
+          // Ignore storage errors
+        }
+      },
+      removeItem: (name) => {
+        try {
+          localStorage.removeItem(name);
+        } catch {
+          // Ignore storage errors
+        }
+      },
+    };
+  }
+  
+  // On native, use AsyncStorage
+  return AsyncStorage;
+};
 
 // Types
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
