@@ -16,18 +16,19 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const user = useAppStore((state) => state.user);
   const currentMood = useAppStore((state) => state.currentMood);
   const [isNavigationReady, setIsNavigationReady] = useState(false);
+  const [forceShow, setForceShow] = useState(false);
 
-  // Hydration timeout fallback for web platform
+  // Hydration timeout fallback - force show content after 2 seconds
   useEffect(() => {
-    // If not hydrated after 1 second, force hydration (quick timeout for web)
     const hydrationTimeout = setTimeout(() => {
       if (!hasHydrated) {
         console.log('Auth Guard: Forcing hydration after timeout');
         setHasHydrated(true);
       }
-    }, 1000);
+      setForceShow(true);
+    }, 2000);
     return () => clearTimeout(hydrationTimeout);
-  }, [hasHydrated, setHasHydrated]);
+  }, []);
 
   // Wait for navigation to be ready
   useEffect(() => {
