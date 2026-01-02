@@ -140,15 +140,20 @@ export const useUser = () => useAuthStore((state) => state.user);
 export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
 export const useUserRole = () => useAuthStore((state) => state.userRole);
 export const useHasHydrated = () => useAuthStore((state) => state._hasHydrated);
+export const useRefreshUser = () => useAuthStore((state) => state.refreshUserFromServer);
 
 export const useCanAccessOwnerInterface = () => {
   const userRole = useAuthStore((state) => state.userRole);
   return userRole === 'owner' || userRole === 'partner';
 };
 
+// Admin panel access check - includes admin role
 export const useCanAccessAdminPanel = () => {
   const userRole = useAuthStore((state) => state.userRole);
-  return ['owner', 'partner', 'admin'].includes(userRole);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = ['owner', 'partner', 'admin'].includes(userRole);
+  // Also check is_admin flag for backwards compatibility
+  return isAdmin || user?.is_admin === true;
 };
 
 export default useAuthStore;
