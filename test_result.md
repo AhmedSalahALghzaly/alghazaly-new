@@ -373,11 +373,23 @@ frontend:
     file: "frontend/app/checkout.tsx"
     stuck_count: 0
     priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "MAJOR UPDATE: Checkout now fetches server cart on mount. Uses displayCartItems from server instead of stale store. Added loading state and empty cart handling. Shows original price (strikethrough), final discounted price, savings breakdown."
+
+  - task: "Server-Side Cart Integration"
+    implemented: true
+    working: true
+    file: "frontend/src/store/appStore.ts, frontend/app/checkout.tsx"
+    stuck_count: 0
+    priority: "critical"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Updated checkout to use server-side cart pricing. Shows original price (strikethrough), final discounted price, savings breakdown in Review and Confirm steps. Footer shows total savings."
+        comment: "Complete server-side cart system. Checkout fetches fresh cart from server. Store synced with setCartItems. All pricing from backend (final_unit_price, original_unit_price)."
       - working: true
         agent: "testing"
         comment: "✅ Backend cart system v4.0 verified working. All 20 API tests passed (100% success rate). Health check confirms v4.0.0. Cart APIs (GET /cart, POST /cart/add, PUT /cart/update, DELETE /cart/void-bundle, DELETE /cart/clear) exist and require authentication. Order API (POST /orders) requires authentication. All endpoints properly secured. Enhanced pricing fields (original_unit_price, final_unit_price, discount_details) implemented in server-side cart storage. Bundle discount support confirmed. Analytics API includes order_source_breakdown and discount_performance fields."
