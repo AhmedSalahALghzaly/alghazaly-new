@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, View, StyleSheet, TouchableOpacity, Text, Pressable } from 'react-native';
+import { Platform, View, StyleSheet, TouchableOpacity, Text, Pressable, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -11,9 +11,6 @@ import { AdvancedSearchBottomSheet } from '../../src/components/ui/AdvancedSearc
 
 // Owner email that can always access the interface
 const OWNER_EMAIL = 'pc.2025.ai@gmail.com';
-
-// Global state for search visibility (to be accessed from tab button)
-let globalSetShowSearch: ((show: boolean) => void) | null = null;
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -28,9 +25,6 @@ export default function TabLayout() {
   
   // State for advanced search bottom sheet
   const [showSearch, setShowSearch] = useState(false);
-  
-  // Store setter in global for access from tab button
-  globalSetShowSearch = setShowSearch;
   
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -88,18 +82,17 @@ export default function TabLayout() {
   // Determine if we should show the center button
   const showCenterButton = canAccessOwner || isAdmin;
 
-  // Custom Search Tab Button that opens bottom sheet
-  const SearchTabButton = ({ children, style, ...props }: any) => {
+  // Memoized search tab button to prevent re-renders
+  const SearchTabButton = useCallback((props: any) => {
     return (
       <Pressable
-        {...props}
         onPress={() => setShowSearch(true)}
         style={({ pressed }) => [
-          style,
           { 
             flex: 1,
             alignItems: 'center', 
             justifyContent: 'center',
+            paddingVertical: 4,
             opacity: pressed ? 0.7 : 1,
           }
         ]}
@@ -121,102 +114,104 @@ export default function TabLayout() {
         </View>
       </Pressable>
     );
-  };
+  }, [colors.tabBarInactive, language]);
 
   return (
-    <View style={{ flex: 1 }}>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            backgroundColor: colors.tabBar,
-            borderTopColor: colors.border,
-            height: Platform.OS === 'ios' ? 88 : 64,
-            paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-            paddingTop: 8,
-          },
-          tabBarActiveTintColor: colors.tabBarActive,
-          tabBarInactiveTintColor: colors.tabBarInactive,
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: t('home'),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
-            ),
+    <>
+      <View style={{ flex: 1 }}>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: {
+              backgroundColor: colors.tabBar,
+              borderTopColor: colors.border,
+              height: Platform.OS === 'ios' ? 88 : 64,
+              paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+              paddingTop: 8,
+            },
+            tabBarActiveTintColor: colors.tabBarActive,
+            tabBarInactiveTintColor: colors.tabBarInactive,
+            tabBarLabelStyle: {
+              fontSize: 12,
+              fontWeight: '600',
+            },
           }}
-        />
-        <Tabs.Screen
-          name="categories"
-          options={{
-            title: t('categories'),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="grid" size={size} color={color} />
-            ),
-          }}
-        />
-        {/* Center spacer for Admin/Owner button - only when showCenterButton */}
-        {showCenterButton && (
+        >
           <Tabs.Screen
-            name="owner-placeholder"
+            name="index"
             options={{
-              title: '',
-              tabBarIcon: () => <View style={{ width: 50 }} />,
-              tabBarButton: () => <View style={{ width: 60 }} />,
+              title: t('home'),
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="home" size={size} color={color} />
+              ),
             }}
-            listeners={{
-              tabPress: (e) => {
-                e.preventDefault();
+          />
+          <Tabs.Screen
+            name="categories"
+            options={{
+              title: t('categories'),
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="grid" size={size} color={color} />
+              ),
+            }}
+          />
+          {/* Center spacer for Admin/Owner button - only when showCenterButton */}
+          {showCenterButton && (
+            <Tabs.Screen
+              name="owner-placeholder"
+              options={{
+                title: '',
+                tabBarIcon: () => <View style={{ width: 50 }} />,
+                tabBarButton: () => <View style={{ width: 60 }} />,
+              }}
+              listeners={{
+                tabPress: (e) => {
+                  e.preventDefault();
+                },
+              }}
+            />
+          )}
+          <Tabs.Screen
+            name="cart"
+            options={{
+              title: language === 'ar' ? 'حسابي' : 'My Hub',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="bag-handle" size={size} color={color} />
+              ),
+              tabBarBadge: cartCount > 0 ? cartCount : undefined,
+              tabBarBadgeStyle: {
+                backgroundColor: colors.error,
+                fontSize: 10,
               },
             }}
           />
+          {/* Search Tab - Opens Bottom Sheet instead of navigating */}
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: language === 'ar' ? 'بحث' : 'Search',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="search" size={size} color={color} />
+              ),
+              tabBarButton: SearchTabButton,
+            }}
+          />
+        </Tabs>
+        
+        {/* Admin/Owner Access Center Button - Floating above tab bar */}
+        {showCenterButton && (
+          <View style={styles.ownerButtonContainer}>
+            <CenterAccessButton />
+          </View>
         )}
-        <Tabs.Screen
-          name="cart"
-          options={{
-            title: language === 'ar' ? 'حسابي' : 'My Hub',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="bag-handle" size={size} color={color} />
-            ),
-            tabBarBadge: cartCount > 0 ? cartCount : undefined,
-            tabBarBadgeStyle: {
-              backgroundColor: colors.error,
-              fontSize: 10,
-            },
-          }}
-        />
-        {/* Search Tab - Opens Bottom Sheet instead of navigating */}
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: language === 'ar' ? 'بحث' : 'Search',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="search" size={size} color={color} />
-            ),
-            tabBarButton: SearchTabButton,
-          }}
-        />
-      </Tabs>
-      
-      {/* Admin/Owner Access Center Button - Floating above tab bar */}
-      {showCenterButton && (
-        <View style={styles.ownerButtonContainer}>
-          <CenterAccessButton />
-        </View>
-      )}
+      </View>
 
-      {/* Advanced Search Bottom Sheet */}
+      {/* Advanced Search Bottom Sheet - Outside Tabs to avoid expo-router warning */}
       <AdvancedSearchBottomSheet 
         visible={showSearch} 
         onClose={() => setShowSearch(false)} 
       />
-    </View>
+    </>
   );
 }
 
