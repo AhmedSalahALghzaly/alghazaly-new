@@ -186,7 +186,12 @@ export default function CustomersScreen() {
             </View>
           ) : (
             sortedCustomers.map((customer: any, index: number) => (
-              <TouchableOpacity key={customer.id || index} style={styles.customerCard}>
+              <TouchableOpacity 
+                key={customer.id || index} 
+                style={styles.customerCard}
+                onPress={() => router.push(`/admin/customers?customerId=${customer.user_id || customer.id}`)}
+                activeOpacity={0.7}
+              >
                 <BlurView intensity={15} tint="light" style={styles.cardBlur}>
                   {/* Rank Badge */}
                   <View style={[
