@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Animated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useAppStore } from '../../src/store/appStore';
 import { productsApi, cartApi, commentsApi, favoritesApi } from '../../src/services/api';
+import { AnimatedFavoriteButton, AnimatedCartButton } from '../../src/components/AnimatedIconButton';
 
 interface Comment {
   id: string;
