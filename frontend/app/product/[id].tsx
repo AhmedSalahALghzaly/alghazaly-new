@@ -620,29 +620,252 @@ export default function ProductDetailScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Add to Cart Button */}
-      <View style={[
-        styles.addToCartContainer, 
-        { backgroundColor: colors.card, borderTopColor: colors.border }
-      ]}>
-        <TouchableOpacity
-          style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-          onPress={handleAddToCart}
-          disabled={addingToCart}
-        >
-          {addingToCart ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <>
-              <Ionicons name="cart" size={22} color="#FFF" />
-              <Text style={styles.addToCartText}>{t('addToCart')}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      {/* Add to Cart Button - Professional Animated */}
+      <AnimatedAddToCartBar
+        onPress={handleAddToCart}
+        isLoading={addingToCart}
+        price={product.price}
+        label={t('addToCart')}
+        colors={colors}
+        language={language}
+      />
     </KeyboardAvoidingView>
   );
 }
+
+// Professional Animated Add to Cart Component
+const AnimatedAddToCartBar: React.FC<{
+  onPress: () => void;
+  isLoading: boolean;
+  price: number;
+  label: string;
+  colors: any;
+  language: string;
+}> = ({ onPress, isLoading, price, label, colors, language }) => {
+  const scale = useSharedValue(1);
+  const iconRotate = useSharedValue(0);
+  const shimmerX = useSharedValue(-200);
+  const successScale = useSharedValue(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Start shimmer animation on mount
+  useEffect(() => {
+    const animateShimmer = () => {
+      shimmerX.value = withSequence(
+        withTiming(-200, { duration: 0 }),
+        withTiming(400, { duration: 2000 })
+      );
+    };
+    const interval = setInterval(animateShimmer, 3000);
+    animateShimmer();
+    return () => clearInterval(interval);
+  }, []);
+
+  const handlePress = () => {
+    if (isLoading) return;
+    
+    // Haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    // Button press animation
+    scale.value = withSequence(
+      withSpring(0.92, { damping: 10, stiffness: 400 }),
+      withSpring(1.05, { damping: 8, stiffness: 300 }),
+      withSpring(1, { damping: 10, stiffness: 400 })
+    );
+    
+    // Icon rotation animation
+    iconRotate.value = withSequence(
+      withTiming(-15, { duration: 80 }),
+      withTiming(15, { duration: 80 }),
+      withTiming(-10, { duration: 60 }),
+      withTiming(10, { duration: 60 }),
+      withTiming(0, { duration: 100 })
+    );
+    
+    onPress();
+  };
+
+  // Show success animation after loading completes
+  useEffect(() => {
+    if (!isLoading && showSuccess) {
+      successScale.value = withSequence(
+        withSpring(1.2, { damping: 8, stiffness: 400 }),
+        withSpring(1, { damping: 10, stiffness: 400 })
+      );
+      setTimeout(() => setShowSuccess(false), 1500);
+    }
+  }, [isLoading]);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${iconRotate.value}deg` }],
+  }));
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shimmerX.value }],
+  }));
+
+  const successStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: successScale.value }],
+    opacity: interpolate(successScale.value, [0, 0.5, 1], [0, 1, 1], Extrapolation.CLAMP),
+  }));
+
+  return (
+    <View style={[
+      addToCartStyles.container, 
+      { backgroundColor: colors.card, borderTopColor: colors.border }
+    ]}>
+      {/* Price display */}
+      <View style={addToCartStyles.priceSection}>
+        <Text style={[addToCartStyles.priceLabel, { color: colors.textSecondary }]}>
+          {language === 'ar' ? 'السعر' : 'Price'}
+        </Text>
+        <Text style={[addToCartStyles.priceValue, { color: colors.text }]}>
+          {price?.toFixed(2)} <Text style={addToCartStyles.currency}>{language === 'ar' ? 'ج.م' : 'EGP'}</Text>
+        </Text>
+      </View>
+
+      {/* Animated Button */}
+      <Animated.View style={[addToCartStyles.buttonWrapper, containerStyle]}>
+        <TouchableOpacity
+          style={addToCartStyles.button}
+          onPress={handlePress}
+          disabled={isLoading}
+          activeOpacity={1}
+        >
+          <LinearGradient
+            colors={isLoading ? ['#6B7280', '#4B5563'] : ['#3B82F6', '#2563EB']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={addToCartStyles.gradient}
+          >
+            {/* Shimmer effect */}
+            <Animated.View style={[addToCartStyles.shimmer, shimmerStyle]}>
+              <LinearGradient
+                colors={['transparent', 'rgba(255,255,255,0.3)', 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={addToCartStyles.shimmerGradient}
+              />
+            </Animated.View>
+
+            {isLoading ? (
+              <View style={addToCartStyles.loadingContainer}>
+                <ActivityIndicator size="small" color="#FFF" />
+                <Text style={addToCartStyles.buttonText}>
+                  {language === 'ar' ? 'جاري الإضافة...' : 'Adding...'}
+                </Text>
+              </View>
+            ) : (
+              <View style={addToCartStyles.buttonContent}>
+                <Animated.View style={iconStyle}>
+                  <Ionicons name="cart" size={22} color="#FFF" />
+                </Animated.View>
+                <Text style={addToCartStyles.buttonText}>{label}</Text>
+                <View style={addToCartStyles.plusBadge}>
+                  <Ionicons name="add" size={14} color="#FFF" />
+                </View>
+              </View>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+};
+
+const addToCartStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+    borderTopWidth: 1,
+    gap: 16,
+  },
+  priceSection: {
+    alignItems: 'flex-start',
+  },
+  priceLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  priceValue: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  currency: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  buttonWrapper: {
+    flex: 1,
+  },
+  button: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  gradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 100,
+  },
+  shimmerGradient: {
+    flex: 1,
+    width: 100,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  plusBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
