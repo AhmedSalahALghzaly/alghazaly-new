@@ -167,7 +167,22 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
           api.get(`/admin/customer/${customerId}/orders`).catch(() => ({ data: { orders: [] } })),
         ]);
 
-        setFavorites(favRes.data?.favorites || []);
+        // Ensure favorites have proper structure with product data
+        const favoritesData = favRes.data?.favorites || [];
+        const processedFavorites = favoritesData.map((fav: any) => ({
+          ...fav,
+          product_id: fav.product_id || fav.product?.id,
+          product: fav.product || {
+            id: fav.product_id,
+            name: fav.name,
+            name_ar: fav.name_ar,
+            price: fav.price,
+            image_url: fav.image_url,
+            sku: fav.sku,
+          }
+        }));
+
+        setFavorites(processedFavorites);
         setLocalCartItems(cartRes.data?.items || []);
         setOrders(ordersRes.data?.orders || []);
         setProfileData(customerData);
@@ -190,11 +205,26 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
           orderApi.getAll().catch(() => ({ data: [] })),
         ]);
 
-        setFavorites(favRes.data || []);
+        // Process favorites data
+        const favoritesData = Array.isArray(favRes.data) ? favRes.data : (favRes.data?.favorites || []);
+        const processedFavorites = favoritesData.map((fav: any) => ({
+          ...fav,
+          product_id: fav.product_id || fav.product?.id,
+          product: fav.product || {
+            id: fav.product_id,
+            name: fav.name,
+            name_ar: fav.name_ar,
+            price: fav.price,
+            image_url: fav.image_url,
+            sku: fav.sku,
+          }
+        }));
+
+        setFavorites(processedFavorites);
         const items = cartRes.data?.items || [];
         setLocalCartItems(items);
         setCartItems(items); // Sync with global store
-        setOrders(ordersRes.data || []);
+        setOrders(Array.isArray(ordersRes.data) ? ordersRes.data : (ordersRes.data?.orders || []));
         setProfileData(user);
 
         // Pre-fill checkout form with user data
