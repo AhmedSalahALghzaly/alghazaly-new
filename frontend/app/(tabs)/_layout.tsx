@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { Platform, View, StyleSheet, TouchableOpacity, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -11,6 +11,9 @@ import { AdvancedSearchBottomSheet } from '../../src/components/ui/AdvancedSearc
 
 // Owner email that can always access the interface
 const OWNER_EMAIL = 'pc.2025.ai@gmail.com';
+
+// Global state for search visibility (to be accessed from tab button)
+let globalSetShowSearch: ((show: boolean) => void) | null = null;
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -25,6 +28,9 @@ export default function TabLayout() {
   
   // State for advanced search bottom sheet
   const [showSearch, setShowSearch] = useState(false);
+  
+  // Store setter in global for access from tab button
+  globalSetShowSearch = setShowSearch;
   
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -81,6 +87,41 @@ export default function TabLayout() {
 
   // Determine if we should show the center button
   const showCenterButton = canAccessOwner || isAdmin;
+
+  // Custom Search Tab Button that opens bottom sheet
+  const SearchTabButton = ({ children, style, ...props }: any) => {
+    return (
+      <Pressable
+        {...props}
+        onPress={() => setShowSearch(true)}
+        style={({ pressed }) => [
+          style,
+          { 
+            flex: 1,
+            alignItems: 'center', 
+            justifyContent: 'center',
+            opacity: pressed ? 0.7 : 1,
+          }
+        ]}
+      >
+        <View style={{ alignItems: 'center' }}>
+          <Ionicons 
+            name="search" 
+            size={24} 
+            color={colors.tabBarInactive} 
+          />
+          <Text style={{ 
+            fontSize: 12, 
+            fontWeight: '600', 
+            color: colors.tabBarInactive,
+            marginTop: 2,
+          }}>
+            {language === 'ar' ? 'بحث' : 'Search'}
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -150,41 +191,15 @@ export default function TabLayout() {
             },
           }}
         />
-        {/* Advanced Search Tab - Replaces Profile */}
+        {/* Search Tab - Opens Bottom Sheet instead of navigating */}
         <Tabs.Screen
           name="profile"
           options={{
             title: language === 'ar' ? 'بحث' : 'Search',
-            href: null, // Prevent default navigation
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="search" size={size} color={color} />
             ),
-            tabBarButton: (props) => (
-              <TouchableOpacity
-                onPress={() => setShowSearch(true)}
-                style={[{ 
-                  flex: 1,
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  paddingVertical: 8,
-                }]}
-                activeOpacity={0.7}
-              >
-                <Ionicons 
-                  name="search" 
-                  size={24} 
-                  color={colors.tabBarInactive} 
-                />
-                <Text style={{ 
-                  fontSize: 12, 
-                  fontWeight: '600', 
-                  color: colors.tabBarInactive,
-                  marginTop: 2,
-                }}>
-                  {language === 'ar' ? 'بحث' : 'Search'}
-                </Text>
-              </TouchableOpacity>
-            ),
+            tabBarButton: SearchTabButton,
           }}
         />
       </Tabs>
