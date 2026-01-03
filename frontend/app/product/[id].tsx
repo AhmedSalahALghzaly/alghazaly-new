@@ -1179,25 +1179,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 10,
   },
-  addToCartContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    borderTopWidth: 1,
-  },
-  addToCartButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 10,
-  },
-  addToCartText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
 });
