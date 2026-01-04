@@ -456,43 +456,51 @@ export default function OrderDetailAdmin() {
             </Text>
           </View>
           
-          {/* Discount Input Section */}
+          {/* Discount Section - Editing for Owner Only */}
           <View style={[styles.discountSection, { borderColor: colors.border }]}>
             <Text style={[styles.discountLabel, { color: colors.text }]}>
               {language === 'ar' ? 'الخصم (ج.م):' : 'Discount (EGP):'}
             </Text>
-            <View style={styles.discountInputRow}>
-              <TextInput
-                style={[styles.discountInput, { 
-                  backgroundColor: colors.surface, 
-                  borderColor: colors.border, 
-                  color: colors.text 
-                }]}
-                value={discountInput}
-                onChangeText={setDiscountInput}
-                keyboardType="decimal-pad"
-                placeholder="0.00"
-                placeholderTextColor={colors.textSecondary}
-              />
-              <TouchableOpacity
-                style={[styles.applyDiscountBtn, { backgroundColor: '#10b981' }]}
-                onPress={applyDiscount}
-                disabled={applyingDiscount}
-              >
-                {applyingDiscount ? (
-                  <ActivityIndicator size="small" color="#FFF" />
-                ) : (
-                  <Ionicons name="checkmark" size={18} color="#FFF" />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.clearDiscountBtn, { backgroundColor: colors.error }]}
-                onPress={clearDiscount}
-                disabled={applyingDiscount}
-              >
-                <Ionicons name="trash" size={18} color="#FFF" />
-              </TouchableOpacity>
-            </View>
+            {isOwner ? (
+              // Owner can edit discount
+              <View style={styles.discountInputRow}>
+                <TextInput
+                  style={[styles.discountInput, { 
+                    backgroundColor: colors.surface, 
+                    borderColor: colors.border, 
+                    color: colors.text 
+                  }]}
+                  value={discountInput}
+                  onChangeText={setDiscountInput}
+                  keyboardType="decimal-pad"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity
+                  style={[styles.applyDiscountBtn, { backgroundColor: '#10b981' }]}
+                  onPress={applyDiscount}
+                  disabled={applyingDiscount}
+                >
+                  {applyingDiscount ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Ionicons name="checkmark" size={18} color="#FFF" />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.clearDiscountBtn, { backgroundColor: colors.error }]}
+                  onPress={clearDiscount}
+                  disabled={applyingDiscount}
+                >
+                  <Ionicons name="close" size={18} color="#FFF" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              // Others see only the discount value (read-only)
+              <Text style={[styles.discountDisplayValue, { color: discount > 0 ? '#10b981' : colors.textSecondary }]}>
+                {discount > 0 ? `-${discount.toFixed(2)} ج.م` : (language === 'ar' ? 'لا يوجد خصم' : 'No discount')}
+              </Text>
+            )}
           </View>
 
           {discount > 0 && (
