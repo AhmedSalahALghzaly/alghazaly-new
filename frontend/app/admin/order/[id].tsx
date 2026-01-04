@@ -300,7 +300,7 @@ export default function OrderDetailAdmin() {
                     ) : (
                       <>
                         <Ionicons 
-                          name={btn.icon as any} 
+                          name={btn.icon} 
                           size={18} 
                           color={isCurrentStatus ? '#FFF' : STATUS_COLORS[btn.status]} 
                         />
