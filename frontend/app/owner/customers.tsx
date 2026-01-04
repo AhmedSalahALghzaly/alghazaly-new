@@ -1,5 +1,5 @@
 /**
- * Customers Management Screen - With Toggle Logic
+ * Customers Management Screen - With Toggle Logic & Real-Time Status Indicators
  */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
@@ -16,8 +16,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../../src/store/appStore';
-import { customerApi } from '../../src/services/api';
+import { customerApi, ordersApi } from '../../src/services/api';
 import { ListItemSkeleton } from '../../src/components/ui/Skeleton';
+import { OrderStatusIndicator } from '../../src/components/ui/OrderStatusIndicator';
+import api from '../../src/services/api';
 
 type SortMode = 'most_purchased' | 'highest_value';
 
@@ -32,12 +34,50 @@ export default function CustomersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sortMode, setSortMode] = useState<SortMode>('most_purchased');
+  // Store order status info per customer
+  const [customerOrderStatus, setCustomerOrderStatus] = useState<{[key: string]: { status: string; activeCount: number }}>({});
 
   const fetchCustomers = async () => {
     try {
       setLoading(true);
       const res = await customerApi.getAll();
-      setCustomers(res.data?.customers || res.data || []);
+      const customersList = res.data?.customers || res.data || [];
+      setCustomers(customersList);
+      
+      // Fetch order status for each customer
+      const statusMap: {[key: string]: { status: string; activeCount: number }} = {};
+      for (const customer of customersList) {
+        const userId = customer.user_id || customer.id;
+        try {
+          const ordersRes = await api.get(`/admin/customer/${userId}/orders`);
+          const orders = ordersRes.data?.orders || [];
+          
+          // Find most recent active order (not delivered/cancelled)
+          const activeStatuses = ['pending', 'confirmed', 'preparing', 'shipped', 'out_for_delivery'];
+          const activeOrders = orders.filter((o: any) => activeStatuses.includes(o.status));
+          
+          if (activeOrders.length > 0) {
+            // Sort by created_at to get most recent
+            activeOrders.sort((a: any, b: any) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            statusMap[userId] = {
+              status: activeOrders[0].status,
+              activeCount: activeOrders.length,
+            };
+          } else {
+            // Check if any orders at all
+            const latestOrder = orders[0];
+            statusMap[userId] = {
+              status: latestOrder?.status || 'no_active_order',
+              activeCount: 0,
+            };
+          }
+        } catch (e) {
+          statusMap[userId] = { status: 'no_active_order', activeCount: 0 };
+        }
+      }
+      setCustomerOrderStatus(statusMap);
     } catch (err) {
       console.error('Error fetching customers:', err);
     } finally {
@@ -80,6 +120,12 @@ export default function CustomersScreen() {
     totalOrders: customers.reduce((sum: number, c: any) => sum + (c.order_count || c.total_orders || 0), 0),
     totalValue: customers.reduce((sum: number, c: any) => sum + (c.total_spent || c.total_value || 0), 0),
   }), [customers]);
+
+  // Navigate to customer profile with user_id
+  const handleCustomerPress = (customer: any) => {
+    const userId = customer.user_id || customer.id;
+    router.push(`/admin/customers?customerId=${userId}`);
+  };
 
   return (
     <View style={styles.container}>
@@ -185,51 +231,65 @@ export default function CustomersScreen() {
               </Text>
             </View>
           ) : (
-            sortedCustomers.map((customer: any, index: number) => (
-              <TouchableOpacity 
-                key={customer.id || index} 
-                style={styles.customerCard}
-                onPress={() => router.push(`/admin/customers?customerId=${customer.user_id || customer.id}`)}
-                activeOpacity={0.7}
-              >
-                <BlurView intensity={15} tint="light" style={styles.cardBlur}>
-                  {/* Rank Badge */}
-                  <View style={[
-                    styles.rankBadge,
-                    index === 0 && styles.rankGold,
-                    index === 1 && styles.rankSilver,
-                    index === 2 && styles.rankBronze,
-                  ]}>
-                    <Text style={styles.rankText}>#{index + 1}</Text>
-                  </View>
+            sortedCustomers.map((customer: any, index: number) => {
+              const userId = customer.user_id || customer.id;
+              const orderInfo = customerOrderStatus[userId] || { status: 'no_active_order', activeCount: 0 };
+              
+              return (
+                <TouchableOpacity 
+                  key={customer.id || index} 
+                  style={styles.customerCard}
+                  onPress={() => handleCustomerPress(customer)}
+                  activeOpacity={0.7}
+                >
+                  <BlurView intensity={15} tint="light" style={styles.cardBlur}>
+                    {/* Rank Badge */}
+                    <View style={[
+                      styles.rankBadge,
+                      index === 0 && styles.rankGold,
+                      index === 1 && styles.rankSilver,
+                      index === 2 && styles.rankBronze,
+                    ]}>
+                      <Text style={styles.rankText}>#{index + 1}</Text>
+                    </View>
 
-                  <View style={styles.customerAvatar}>
-                    <Ionicons name="person" size={24} color="#3B82F6" />
-                  </View>
-                  
-                  <View style={styles.customerInfo}>
-                    <Text style={styles.customerName}>{customer.name || customer.email}</Text>
-                    <Text style={styles.customerEmail}>{customer.email}</Text>
-                    <View style={styles.customerStats}>
-                      <View style={styles.customerStat}>
-                        <Ionicons name="cart" size={12} color="#10B981" />
-                        <Text style={styles.customerStatText}>
-                          {customer.order_count || customer.total_orders || 0} {isRTL ? 'طلبات' : 'orders'}
-                        </Text>
-                      </View>
-                      <View style={styles.customerStat}>
-                        <Ionicons name="cash" size={12} color="#F59E0B" />
-                        <Text style={styles.customerStatText}>
-                          {(customer.total_spent || customer.total_value || 0).toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}
-                        </Text>
+                    {/* Real-Time Status Indicator */}
+                    <View style={styles.statusIndicatorContainer}>
+                      <OrderStatusIndicator 
+                        status={orderInfo.status}
+                        activeOrderCount={orderInfo.activeCount}
+                        size={24}
+                      />
+                    </View>
+
+                    <View style={styles.customerAvatar}>
+                      <Ionicons name="person" size={24} color="#3B82F6" />
+                    </View>
+                    
+                    <View style={styles.customerInfo}>
+                      <Text style={styles.customerName}>{customer.name || customer.email}</Text>
+                      <Text style={styles.customerEmail}>{customer.email}</Text>
+                      <View style={styles.customerStats}>
+                        <View style={styles.customerStat}>
+                          <Ionicons name="cart" size={12} color="#10B981" />
+                          <Text style={styles.customerStatText}>
+                            {customer.order_count || customer.total_orders || 0} {isRTL ? 'طلبات' : 'orders'}
+                          </Text>
+                        </View>
+                        <View style={styles.customerStat}>
+                          <Ionicons name="cash" size={12} color="#F59E0B" />
+                          <Text style={styles.customerStatText}>
+                            {(customer.total_spent || customer.total_value || 0).toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
 
-                  <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
-                </BlurView>
-              </TouchableOpacity>
-            ))
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
+                  </BlurView>
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
 
@@ -267,6 +327,7 @@ const styles = StyleSheet.create({
   rankSilver: { backgroundColor: 'rgba(156,163,175,0.5)' },
   rankBronze: { backgroundColor: 'rgba(180,83,9,0.5)' },
   rankText: { fontSize: 10, fontWeight: '700', color: '#FFF' },
+  statusIndicatorContainer: { position: 'absolute', top: 8, right: 8 },
   customerAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(59,130,246,0.2)', alignItems: 'center', justifyContent: 'center' },
   customerInfo: { flex: 1, marginLeft: 12 },
   customerName: { fontSize: 16, fontWeight: '600', color: '#FFF' },
