@@ -460,13 +460,23 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
     }
   };
 
-  // Update order status (admin only)
+  // Update order status (admin only) - with 1 second loading feedback
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    setUpdatingOrderId(orderId + '_' + newStatus);
     try {
+      // Show loading for 1 second as per requirement
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await api.patch(`/orders/${orderId}/status?status=${newStatus}`);
-      loadData();
+      // Update local state immediately for real-time feedback
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
     } catch (error) {
       console.error('Error updating order status:', error);
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
