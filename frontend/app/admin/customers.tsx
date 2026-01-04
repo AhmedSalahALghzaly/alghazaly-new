@@ -108,13 +108,13 @@ export default function CustomersAdmin() {
     }
   }, []);
 
-  const openCustomerProfile = useCallback((customer: any, tab: 'profile' | 'favorites' | 'cart' | 'checkout' | 'orders' = 'favorites') => {
+  const openCustomerProfile = useCallback((customer, tab = 'favorites') => {
     setSelectedCustomer(customer);
     setInitialTab(tab);
     setShowProfile(true);
   }, []);
 
-  const handleViewOrders = useCallback((customer: any) => {
+  const handleViewOrders = useCallback((customer) => {
     openCustomerProfile(customer, 'orders');
     // Reset pending count for this customer
     setPendingOrderCounts(prev => ({ ...prev, [customer.user_id]: 0 }));
