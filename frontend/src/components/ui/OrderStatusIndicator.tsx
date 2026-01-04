@@ -28,16 +28,7 @@ const STATUS_CONFIG = {
   'cancelled': { color: '#6B7280', pulse: false, label: 'Cancelled' },
 };
 
-interface OrderStatusIndicatorProps {
-  // Most recent order status for this customer
-  status: string;
-  // Number of active orders (not delivered/cancelled)
-  activeOrderCount?: number;
-  // Size of the indicator
-  size?: number;
-}
-
-export const OrderStatusIndicator: React.FC<OrderStatusIndicatorProps> = ({
+export const OrderStatusIndicator = ({
   status = 'no_active_order',
   activeOrderCount = 0,
   size = 28,
@@ -46,7 +37,7 @@ export const OrderStatusIndicator: React.FC<OrderStatusIndicatorProps> = ({
   const glowAnim = useSharedValue(0);
   const arrowAnim = useSharedValue(0);
 
-  const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG['no_active_order'];
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG['no_active_order'];
   const shouldPulse = config.pulse;
   const hasMultipleOrders = activeOrderCount > 1;
 
