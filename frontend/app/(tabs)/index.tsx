@@ -957,6 +957,37 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginBottom: 4,
   },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    gap: 4,
+  },
+  quantityRowRTL: {
+    flexDirection: 'row-reverse',
+  },
+  quantityButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  quantityBadge: {
+    minWidth: 24,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  quantityText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
   productFooter: {
     flexDirection: 'row',
     alignItems: 'center',
