@@ -20,6 +20,7 @@ import { CategoryCard } from '../../src/components/CategoryCard';
 import { OfferSlider } from '../../src/components/OfferSlider';
 import { DynamicOfferSlider } from '../../src/components/DynamicOfferSlider';
 import { InteractiveCarSelector } from '../../src/components/InteractiveCarSelector';
+import { AnimatedFavoriteButton, AnimatedCartButton } from '../../src/components/AnimatedIconButton';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useAppStore } from '../../src/store/appStore';
@@ -27,6 +28,7 @@ import { categoriesApi, carBrandsApi, carModelsApi, productBrandsApi, productsAp
 import { Skeleton, ProductCardSkeleton, CategoryCardSkeleton } from '../../src/components/ui/Skeleton';
 import { syncService } from '../../src/services/syncService';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
