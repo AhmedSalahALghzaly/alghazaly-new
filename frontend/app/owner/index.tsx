@@ -68,6 +68,7 @@ export default function OwnerDashboard() {
   const [addSuccess, setAddSuccess] = useState(false);
   const [partnerError, setPartnerError] = useState('');
   const [loadingPartners, setLoadingPartners] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   // Drag to delete state
   const [deletingPartner, setDeletingPartner] = useState<any>(null);
@@ -78,6 +79,9 @@ export default function OwnerDashboard() {
   // Long press gesture state for Partners icon
   const partnersLongPressTimer = useRef<any>(null);
   const [isLongPressing, setIsLongPressing] = useState(false);
+
+  // Auto-refresh interval
+  const refreshIntervalRef = useRef<any>(null);
 
   // Default mood fallback
   const defaultMood = {
