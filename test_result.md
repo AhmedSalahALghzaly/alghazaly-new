@@ -468,6 +468,56 @@ frontend:
         agent: "testing"
         comment: "✅ Marketing Home Slider endpoint tested successfully. GET /api/marketing/home-slider returns combined list of promotions and bundle offers for display. Found 5 slider items: 2 promotions and 3 bundle offers. Each item has required fields (type, id, title, image, is_active) and proper structure for frontend consumption."
 
+  # ======================= Phase 2 Bug Fixes - Marketing Suite =======================
+
+  - task: "Admin Marketing Suite - Admin View API Fix"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/services/api.ts, frontend/app/admin/marketing.tsx"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added getAllForAdmin() methods to promotionApi and bundleOfferApi that pass active_only=false. Updated marketing.tsx fetchData() to use these admin methods so admin panel shows ALL items (active + inactive)."
+
+  - task: "Delete Function Error Handling"
+    implemented: true
+    working: "NA"
+    file: "frontend/app/admin/marketing.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced deletePromotion and deleteBundle functions with proper error handling. Now shows Alert with specific error message if deletion fails (auth error, not found, etc.)."
+
+  - task: "Cart Bundle Discount Logic Fix"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/store/useCartStore.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed removeFromCart to only void bundle discount if removing item leaves less than 2 items in bundle (incomplete bundle). Previously was voiding discount whenever any bundle item was removed."
+
+  - task: "Order Detail Display Enhancement"
+    implemented: true
+    working: "NA"
+    file: "frontend/app/admin/order/[id].tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced order detail page to show: 1) Bundle badge for bundle items, 2) Original price (strikethrough) vs final price for discounted items, 3) total_discount from promotional offers in order summary."
+
 metadata:
   created_by: "main_agent"
   version: "2.0"
