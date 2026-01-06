@@ -381,7 +381,8 @@ export default function SearchScreen() {
           <FlashList
             data={products}
             keyExtractor={(item) => item.id}
-            numColumns={NUM_COLUMNS}
+            numColumns={numColumns}
+            key={numColumns} // Force re-render when columns change
             estimatedItemSize={250}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={
@@ -390,7 +391,7 @@ export default function SearchScreen() {
               </Text>
             }
             renderItem={({ item }) => (
-              <View style={styles.cardWrapper}>
+              <View style={[styles.cardWrapper, { width: cardWidth + CARD_MARGIN * 2 }]}>
                 <ProductCard
                   product={item}
                   cardWidth={cardWidth}
