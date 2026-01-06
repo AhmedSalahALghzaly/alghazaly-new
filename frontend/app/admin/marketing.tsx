@@ -143,8 +143,8 @@ export default function MarketingSuiteScreen() {
   const fetchData = useCallback(async () => {
     try {
       const [promosRes, bundlesRes, productsRes, modelsRes] = await Promise.all([
-        promotionApi.getAll(),
-        bundleOfferApi.getAll(),
+        promotionApi.getAllForAdmin(),  // Use admin endpoint to see ALL promotions (active + inactive)
+        bundleOfferApi.getAllForAdmin(), // Use admin endpoint to see ALL bundles (active + inactive)
         productApi.getAll({ limit: 1000 }),
         carModelApi.getAll(),
       ]);
@@ -154,11 +154,12 @@ export default function MarketingSuiteScreen() {
       setCarModels(modelsRes.data || []);
     } catch (error) {
       console.error('Error fetching marketing data:', error);
+      showToast(language === 'ar' ? 'فشل في تحميل البيانات' : 'Failed to load data', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     fetchData();
