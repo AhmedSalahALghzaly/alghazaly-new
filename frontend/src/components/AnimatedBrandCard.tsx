@@ -234,47 +234,48 @@ export const AnimatedBrandCard: React.FC<AnimatedBrandCardProps> = ({
   );
 };
 
+// All sizes increased by 15% for better visibility
 const styles = StyleSheet.create({
   container: {
-    width: 110,
-    height: 130,
-    borderRadius: 16,
+    width: 127,    // 110 * 1.15 ≈ 127
+    height: 150,   // 130 * 1.15 ≈ 150
+    borderRadius: 18,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 6,
     overflow: 'hidden',
     position: 'relative',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 9,
   },
   ripple: {
     position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 92,     // 80 * 1.15 ≈ 92
+    height: 92,
+    borderRadius: 46,
     top: '50%',
     left: '50%',
-    marginTop: -40,
-    marginLeft: -40,
+    marginTop: -46,
+    marginLeft: -46,
   },
   glow: {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    borderRadius: 16,
+    borderRadius: 18,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowRadius: 23,
+    elevation: 12,
   },
   imageWrapper: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   imageContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,     // 56 * 1.15 ≈ 64
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -282,22 +283,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   brandImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 55,     // 48 * 1.15 ≈ 55
+    height: 55,
+    borderRadius: 28,
   },
   iconFallback: {
     width: '100%',
     height: '100%',
-    borderRadius: 28,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandName: {
-    fontSize: 12,
+    fontSize: 14,  // 12 * 1.15 ≈ 14
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 5,
     letterSpacing: 0.3,
   },
   textRTL: {
@@ -314,17 +315,17 @@ const styles = StyleSheet.create({
   metaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 5,
   },
   metaText: {
-    fontSize: 10,
+    fontSize: 11,  // 10 * 1.15 ≈ 11
     fontWeight: '600',
   },
   flagEmoji: {
-    fontSize: 12,
+    fontSize: 14,  // 12 * 1.15 ≈ 14
   },
 });
 
