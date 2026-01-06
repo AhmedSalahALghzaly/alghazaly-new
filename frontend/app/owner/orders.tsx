@@ -2,7 +2,7 @@
  * Orders Screen with Status Filtering
  * Deep-linked from Dashboard metrics
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,16 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../../src/store/appStore';
+import { ordersApi } from '../../src/services/api';
 
 type FilterType = 'all' | 'today' | 'pending' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -35,12 +38,49 @@ export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
   const language = useAppStore((state) => state.language);
   const orders = useAppStore((state) => state.orders);
+  const setOrders = useAppStore((state) => state.setOrders);
   const isRTL = language === 'ar';
 
   // Get initial filter from URL params
   const initialFilter = (params.filter as FilterType) || 'all';
   const [activeFilter, setActiveFilter] = useState<FilterType>(initialFilter);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch orders on mount and when filter changes via URL
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    if (params.filter) {
+      setActiveFilter(params.filter as FilterType);
+    }
+  }, [params.filter]);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await ordersApi.getAll();
+      setOrders(response.data || []);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await fetchOrders();
+    setRefreshing(false);
+  }, []);
+
+  const handleFilterChange = (filter: FilterType) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setActiveFilter(filter);
+  };
 
   // Filter orders
   const filteredOrders = useMemo(() => {
