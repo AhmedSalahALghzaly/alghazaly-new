@@ -593,6 +593,23 @@ export default function ProductsAdmin() {
             {language === 'ar' ? 'المنتجات الحالية' : 'Existing Products'} ({products.length})
           </Text>
 
+          {/* Search Bar */}
+          <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="search" size={20} color={colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={language === 'ar' ? 'ابحث بالاسم أو رمز SKU...' : 'Search by name or SKU...'}
+              placeholderTextColor={colors.textSecondary}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
           {loading ? (
             <ActivityIndicator size="large" color={colors.primary} />
           ) : products.length === 0 ? (
@@ -600,7 +617,16 @@ export default function ProductsAdmin() {
               {language === 'ar' ? 'لا توجد منتجات' : 'No products found'}
             </Text>
           ) : (
-            products.map((product) => (
+            products
+              .filter((product) => {
+                if (!searchQuery.trim()) return true;
+                const query = searchQuery.toLowerCase();
+                const name = (product.name || '').toLowerCase();
+                const nameAr = (product.name_ar || '').toLowerCase();
+                const sku = (product.sku || '').toLowerCase();
+                return name.includes(query) || nameAr.includes(query) || sku.includes(query);
+              })
+              .map((product) => (
               <View key={product.id} style={[styles.productCard, { borderColor: colors.border }]}>
                 <View style={styles.productHeader}>
                   {product.image_url || (product.images && product.images.length > 0) ? (
@@ -625,13 +651,24 @@ export default function ProductsAdmin() {
                     </Text>
                   </View>
                   
-                  {/* Delete Button */}
-                  <TouchableOpacity
-                    style={[styles.deleteButton, { backgroundColor: colors.error + '20' }]}
-                    onPress={() => openDeleteConfirm(product)}
-                  >
-                    <Ionicons name="trash" size={18} color={colors.error} />
-                  </TouchableOpacity>
+                  {/* Action Buttons Container */}
+                  <View style={styles.actionButtonsContainer}>
+                    {/* Delete Button */}
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.error + '20' }]}
+                      onPress={() => openDeleteConfirm(product)}
+                    >
+                      <Ionicons name="trash" size={18} color={colors.error} />
+                    </TouchableOpacity>
+                    
+                    {/* Edit Button */}
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.primary + '20' }]}
+                      onPress={() => handleEditProduct(product)}
+                    >
+                      <Ionicons name="create" size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 
                 {/* Product Relationships Display */}
