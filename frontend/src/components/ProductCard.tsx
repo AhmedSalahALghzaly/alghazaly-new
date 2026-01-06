@@ -177,6 +177,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
+          width: cardWidth || 160, // Use cardWidth prop or default to 160
         },
       ]}
       onPress={() => router.push(`/product/${product.id}`)}
