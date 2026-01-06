@@ -43,17 +43,24 @@ const COLOR_PALETTES = [
 
 interface SliderItem {
   id: string;
-  type: 'promotion' | 'bundle_offer';
+  type: 'promotion' | 'bundle_offer' | 'bundle';
   title: string;
   title_ar?: string;
+  subtitle?: string;
+  subtitle_ar?: string;
   image?: string;
   discount_percentage?: number;
   original_total?: number;
   discounted_total?: number;
   product_count?: number;
+  product_ids?: string[];
+  products?: any[];
   target_product?: any;
+  target_product_id?: string;
   target_car_model?: any;
+  target_car_model_id?: string;
   is_active: boolean;
+  sort_order?: number;
 }
 
 interface DynamicOfferSliderProps {
