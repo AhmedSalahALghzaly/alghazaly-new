@@ -124,29 +124,7 @@ export default function OwnerDashboard() {
 
   const isRTL = language === 'ar';
 
-  // Fetch partners on mount and set up auto-refresh
-  useEffect(() => {
-    fetchPartners();
-    
-    // Auto-refresh partners every 30 seconds when modal is open
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    };
-  }, []);
-
-  // Start/stop auto-refresh when partners modal visibility changes
-  useEffect(() => {
-    if (showPartnersModal) {
-      refreshIntervalRef.current = setInterval(fetchPartners, 30000);
-    } else {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    }
-  }, [showPartnersModal]);
-
+  // Define fetchPartners first before using it in useEffect
   const fetchPartners = useCallback(async () => {
     setLoadingPartners(true);
     try {
@@ -160,7 +138,30 @@ export default function OwnerDashboard() {
     } finally {
       setLoadingPartners(false);
     }
+  }, []);
+
+  // Fetch partners on mount and set up auto-refresh
+  useEffect(() => {
+    fetchPartners();
+    
+    // Cleanup on unmount
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
   }, [fetchPartners]);
+
+  // Start/stop auto-refresh when partners modal visibility changes
+  useEffect(() => {
+    if (showPartnersModal) {
+      refreshIntervalRef.current = setInterval(fetchPartners, 30000);
+    } else {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    }
+  }, [showPartnersModal, fetchPartners]);
 
   const handleIconPress = (route: string) => {
     haptic.tap();
