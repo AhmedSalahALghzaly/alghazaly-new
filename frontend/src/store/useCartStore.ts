@@ -273,5 +273,6 @@ export const useCartStore = create<CartState>()(
 export const useCartItems = () => useCartStore((state) => state.cartItems);
 export const useCartTotal = () => useCartStore((state) => state.getCartTotal());
 export const useCartSubtotal = () => useCartStore((state) => state.getCartSubtotal());
+export const useAddBundleToCart = () => useCartStore((state) => state.addBundleToCart);
 
 export default useCartStore;
