@@ -65,7 +65,8 @@ export default function OfferDetailsScreen() {
   const { colors, isDark } = useTheme();
   const { t, language, isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { user, addToLocalCart } = useAppStore();
+  const { user } = useAppStore();
+  const { addBundleToCart, addToCart } = useCartStore();
 
   // Bundle offer data from API
   const [offer, setOffer] = useState<BundleOffer | null>(null);
