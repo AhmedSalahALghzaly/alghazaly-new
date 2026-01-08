@@ -449,29 +449,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* 4. Categories Section - FOURTH */}
-        <View style={styles.section}>
-          <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t('shopByCategory')}
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/categories')}>
-              <Text style={[styles.viewAll, { color: colors.primary }]}>
-                {t('viewAll')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
-            {categories.map((category) => (
-              <CategoryCard key={category.id} category={category} size="medium" />
-            ))}
-          </ScrollView>
-        </View>
-
         {/* 5. Product Brands Section - FIFTH */}
         <View style={styles.section}>
           <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
