@@ -535,6 +535,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  mainImageContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  mainCategoryImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+  },
   mainCategoryInfo: {
     flex: 1,
     marginLeft: 16,
