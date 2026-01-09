@@ -226,7 +226,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
             style={styles.image}
             contentFit="cover"
             cachePolicy="disk"
-            placeholder={require('../../assets/placeholder-product.png')}
+            placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
             placeholderContentFit="contain"
             transition={200}
           />
