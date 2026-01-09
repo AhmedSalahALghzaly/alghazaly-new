@@ -156,19 +156,19 @@ export default function OwnerDashboard() {
   const fetchAllDataForSearch = useCallback(async () => {
     try {
       // Fetch suppliers
-      const suppliersRes = await suppliersApi.getAll();
+      const suppliersRes = await supplierApi.getAll();
       if (suppliersRes.data) setSuppliers(suppliersRes.data);
       
       // Fetch distributors
-      const distributorsRes = await distributorsApi.getAll();
+      const distributorsRes = await distributorApi.getAll();
       if (distributorsRes.data) setDistributors(distributorsRes.data);
       
       // Fetch customers
-      const customersRes = await customersApi.getAll();
+      const customersRes = await customerApi.getAll();
       if (customersRes.data) setCustomers(customersRes.data);
       
       // Fetch admins
-      const adminsRes = await adminsApi.getAll();
+      const adminsRes = await adminApi.getAll();
       if (adminsRes.data) setAdmins(adminsRes.data);
       
       console.log('All data fetched for global search');
