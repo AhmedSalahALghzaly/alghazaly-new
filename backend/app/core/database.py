@@ -3,7 +3,7 @@ Database Connection and Management
 MongoDB with Motor async driver
 """
 import logging
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from .config import settings
 from datetime import datetime, timezone
 import uuid
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Global database references
 client: AsyncIOMotorClient = None
-db = None
+db: AsyncIOMotorDatabase = None
 
 async def connect_to_mongo():
     """Connect to MongoDB and return database instance"""
@@ -20,6 +20,10 @@ async def connect_to_mongo():
     client = AsyncIOMotorClient(settings.MONGO_URL)
     db = client[settings.DB_NAME]
     logger.info(f"Connected to MongoDB - ALghazaly Auto Parts API v4.1")
+    return db
+
+def get_database():
+    """Get the database instance - for use in modules that need direct access"""
     return db
 
 async def close_mongo_connection():
