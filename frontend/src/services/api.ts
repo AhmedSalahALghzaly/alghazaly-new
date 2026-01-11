@@ -143,6 +143,8 @@ export const cartApi = {
   updateItem: (productId: string, quantity: number) => api.put('/cart/update', { product_id: productId, quantity }),
   voidBundle: (bundleGroupId: string) => api.delete(`/cart/void-bundle/${bundleGroupId}`),
   clear: () => api.delete('/cart/clear'),
+  // Stock validation before checkout
+  validateStock: () => api.post('/cart/validate-stock'),
 };
 
 // Order APIs (Enhanced with Admin-Assisted Orders)
