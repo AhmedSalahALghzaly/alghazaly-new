@@ -554,4 +554,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 12,
   },
+  footerLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    gap: 8,
+  },
+  footerText: {
+    fontSize: 14,
+  },
 });
