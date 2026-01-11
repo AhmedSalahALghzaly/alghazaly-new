@@ -13,6 +13,7 @@ router = APIRouter(prefix="/auth")
 
 @router.post("/session")
 async def exchange_session(request: Request, response: Response):
+    db = get_database()
     body = await request.json()
     session_id = body.get("session_id")
     if not session_id:
@@ -77,6 +78,7 @@ async def get_me(request: Request):
 
 @router.post("/logout")
 async def logout(request: Request, response: Response):
+    db = get_database()
     token = await get_session_token(request)
     if token:
         await db.sessions.delete_one({"session_token": token})
