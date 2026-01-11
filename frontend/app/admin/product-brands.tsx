@@ -15,6 +15,9 @@ export default function ProductBrandsAdmin() {
   const { colors } = useTheme();
   const { language, isRTL } = useTranslation();
   const router = useRouter();
+  
+  // Admin Sync Service for Local-First Updates
+  const adminSync = useAdminSync();
 
   const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
