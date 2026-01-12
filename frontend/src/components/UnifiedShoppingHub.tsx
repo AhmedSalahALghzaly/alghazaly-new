@@ -314,8 +314,13 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
     }
   };
 
+  // Safe array helpers
+  const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const safeFavorites = Array.isArray(favorites) ? favorites : [];
+
   const addFavoriteToCart = async (product: any) => {
-    const existing = cartItems.find(item => item.product_id === product.id);
+    const existing = safeCartItems.find(item => item.product_id === product.id);
     
     if (existing) {
       updateCartQuantity(product.id, existing.quantity + 1);
