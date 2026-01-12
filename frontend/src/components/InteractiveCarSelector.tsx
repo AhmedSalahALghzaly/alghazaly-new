@@ -181,8 +181,8 @@ export const InteractiveCarSelector: React.FC = () => {
       // Subtle glow effect
       carIconGlow.value = withRepeat(
         withSequence(
-          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.sine) }),
-          withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.sine) })
+          withTiming(1, { duration: 1500 }),
+          withTiming(0.3, { duration: 1500 })
         ),
         -1,
         true
