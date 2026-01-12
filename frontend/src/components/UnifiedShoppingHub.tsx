@@ -950,7 +950,7 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
             </GlassCard>
 
             {/* Order Summary */}
-            {cartItems.length > 0 && (
+            {safeCartItems.length > 0 && (
               <GlassCard style={{ marginTop: 12 }}>
                 <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 12 }]}>
                   {language === 'ar' ? 'ملخص الطلب' : 'Order Summary'}
