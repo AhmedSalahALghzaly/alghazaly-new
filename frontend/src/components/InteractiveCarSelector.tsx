@@ -834,79 +834,73 @@ export const InteractiveCarSelector: React.FC = () => {
             </Text>
           </View>
         ) : (
-          <FlatList
-            data={filteredProducts}
-            numColumns={2}
-            keyExtractor={(item: Product) => item.id}
-            contentContainerStyle={styles.productsGrid}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            windowSize={5}
-            initialNumToRender={6}
-            getItemLayout={(_, index) => ({
-              length: 190,
-              offset: 190 * Math.floor(index / 2),
-              index,
-            })}
-            renderItem={({ item, index }: { item: Product; index: number }) => {
-              const itemScale = useSharedValue(1);
-              
-              const productCardStyle = useAnimatedStyle(() => ({
-                transform: [{ scale: itemScale.value }],
-              }));
+          <View style={styles.flashListContainer}>
+            <FlashList
+              data={filteredProducts}
+              numColumns={2}
+              keyExtractor={(item: Product) => item.id}
+              estimatedItemSize={190}
+              contentContainerStyle={styles.productsGrid}
+              renderItem={({ item, index }: { item: Product; index: number }) => {
+                const itemScale = useSharedValue(1);
+                
+                const productCardStyle = useAnimatedStyle(() => ({
+                  transform: [{ scale: itemScale.value }],
+                }));
 
-              return (
-                <Animated.View
-                  entering={FadeIn.delay(Math.min(index * 40, 300)).duration(250).springify()}
-                  layout={Layout.springify()}
-                  style={[styles.productCardWrapper, productCardStyle]}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.productCard,
-                      { 
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)', 
-                        borderColor: mood?.primary + '30',
-                        shadowColor: mood?.primary,
-                      },
-                    ]}
-                    onPressIn={() => {
-                      itemScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-                    }}
-                    onPressOut={() => {
-                      itemScale.value = withSpring(1, { damping: 12, stiffness: 200 });
-                    }}
-                    onPress={() => handleProductPress(item.id)}
-                    activeOpacity={0.9}
+                return (
+                  <Animated.View
+                    entering={FadeIn.delay(Math.min(index * 40, 300)).duration(250).springify()}
+                    layout={Layout.springify()}
+                    style={[styles.productCardWrapper, productCardStyle]}
                   >
-                    {item.image_url ? (
-                      <Image 
-                        source={{ uri: item.image_url }} 
-                        style={styles.productImage}
-                        contentFit="cover"
-                        cachePolicy="disk"
-                        transition={200}
-                      />
-                    ) : (
-                      <View style={[styles.productImagePlaceholder, { backgroundColor: mood?.primary + '15' }]}>
-                        <Ionicons name="cube-outline" size={36} color={mood?.primary || colors.textSecondary} />
-                      </View>
-                    )}
-                    <View style={styles.productInfo}>
-                      <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
-                        {getName(item)}
-                      </Text>
-                      <View style={[styles.priceTag, { backgroundColor: mood?.primary + '20' }]}>
-                        <Text style={[styles.productPrice, { color: mood?.primary || colors.primary }]}>
-                          {item.price?.toFixed(2)} {language === 'ar' ? 'ج.م' : 'EGP'}
+                    <TouchableOpacity
+                      style={[
+                        styles.productCard,
+                        { 
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)', 
+                          borderColor: mood?.primary + '30',
+                          shadowColor: mood?.primary,
+                        },
+                      ]}
+                      onPressIn={() => {
+                        itemScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+                      }}
+                      onPressOut={() => {
+                        itemScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+                      }}
+                      onPress={() => handleProductPress(item.id)}
+                      activeOpacity={0.9}
+                    >
+                      {item.image_url ? (
+                        <Image 
+                          source={{ uri: item.image_url }} 
+                          style={styles.productImage}
+                          contentFit="cover"
+                          cachePolicy="disk"
+                          transition={200}
+                        />
+                      ) : (
+                        <View style={[styles.productImagePlaceholder, { backgroundColor: mood?.primary + '15' }]}>
+                          <Ionicons name="cube-outline" size={36} color={mood?.primary || colors.textSecondary} />
+                        </View>
+                      )}
+                      <View style={styles.productInfo}>
+                        <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
+                          {getName(item)}
                         </Text>
+                        <View style={[styles.priceTag, { backgroundColor: mood?.primary + '20' }]}>
+                          <Text style={[styles.productPrice, { color: mood?.primary || colors.primary }]}>
+                            {item.price?.toFixed(2)} {language === 'ar' ? 'ج.م' : 'EGP'}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              );
-            }}
-          />
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              }}
+            />
+          </View>
         )}
       </Animated.View>
     </>
