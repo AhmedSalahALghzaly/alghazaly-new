@@ -624,33 +624,91 @@ export default function ProductsAdmin() {
 
             {/* Car Models Selection */}
             <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>
-                {language === 'ar' ? 'موديلات السيارات المتوافقة' : 'Compatible Car Models'}
-              </Text>
+              <View style={styles.labelWithSearch}>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  {language === 'ar' ? 'موديلات السيارات المتوافقة' : 'Compatible Car Models'}
+                </Text>
+                <View style={[styles.miniSearchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Ionicons name="search" size={14} color={colors.textSecondary} />
+                  <TextInput
+                    style={[styles.miniSearchInput, { color: colors.text }]}
+                    value={carModelSearchQuery}
+                    onChangeText={setCarModelSearchQuery}
+                    placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
+                    placeholderTextColor={colors.textSecondary}
+                  />
+                  {carModelSearchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setCarModelSearchQuery('')}>
+                      <Ionicons name="close-circle" size={14} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
               <Text style={[styles.fieldHint, { color: colors.textSecondary }]}>
                 {language === 'ar' ? 'اختر موديلات السيارات المتوافقة (يمكن اختيار أكثر من موديل)' : 'Select compatible car models (multiple selection allowed)'}
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsContainer}>
-                {carModels.map((model) => (
-                  <TouchableOpacity
-                    key={model.id}
-                    style={[
-                      styles.chip,
-                      { 
-                        backgroundColor: selectedCarModelIds.includes(model.id) ? '#10b981' : colors.surface, 
-                        borderColor: selectedCarModelIds.includes(model.id) ? '#10b981' : colors.border 
-                      }
-                    ]}
-                    onPress={() => toggleCarModel(model.id)}
-                  >
-                    {selectedCarModelIds.includes(model.id) && (
-                      <Ionicons name="checkmark" size={14} color="#FFF" style={{ marginRight: 4 }} />
-                    )}
-                    <Text style={{ color: selectedCarModelIds.includes(model.id) ? '#FFF' : colors.text, fontSize: 13, fontWeight: '500' }}>
-                      {language === 'ar' ? model.name_ar : model.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {carModels
+                  .filter((model) => {
+                    if (!carModelSearchQuery.trim()) return true;
+                    const query = carModelSearchQuery.toLowerCase();
+                    const name = (model.name || '').toLowerCase();
+                    const nameAr = (model.name_ar || '').toLowerCase();
+                    return name.includes(query) || nameAr.includes(query);
+                  })
+                  .map((model) => {
+                    const isSelected = selectedCarModelIds.includes(model.id);
+                    const yearRange = model.year_start && model.year_end 
+                      ? `${model.year_start} - ${model.year_end}`
+                      : model.year_start 
+                        ? `${model.year_start}+`
+                        : null;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={model.id}
+                        style={[
+                          styles.carModelChip,
+                          { 
+                            backgroundColor: isSelected ? '#10b981' : colors.surface, 
+                            borderColor: isSelected ? '#10b981' : colors.border 
+                          }
+                        ]}
+                        onPress={() => toggleCarModel(model.id)}
+                      >
+                        {/* Car Model Image */}
+                        {model.image_url ? (
+                          <Image 
+                            source={{ uri: model.image_url }} 
+                            style={[
+                              styles.carModelChipImage,
+                              { borderColor: isSelected ? 'rgba(255,255,255,0.3)' : colors.border }
+                            ]} 
+                          />
+                        ) : (
+                          <View style={[styles.carModelChipPlaceholder, { backgroundColor: colors.border }]}>
+                            <Ionicons name="car" size={16} color={colors.textSecondary} />
+                          </View>
+                        )}
+                        
+                        <View style={styles.carModelChipTextContainer}>
+                          <View style={styles.carModelNameRow}>
+                            {isSelected && (
+                              <Ionicons name="checkmark" size={14} color="#FFF" style={{ marginRight: 4 }} />
+                            )}
+                            <Text style={{ color: isSelected ? '#FFF' : colors.text, fontSize: 13, fontWeight: '500' }} numberOfLines={1}>
+                              {language === 'ar' ? model.name_ar : model.name}
+                            </Text>
+                          </View>
+                          {yearRange && (
+                            <Text style={[styles.carModelYearText, { color: isSelected ? 'rgba(255,255,255,0.75)' : colors.textSecondary }]}>
+                              {yearRange}
+                            </Text>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
               </ScrollView>
               {selectedCarModelIds.length > 0 && (
                 <Text style={[styles.selectedCount, { color: colors.primary }]}>
