@@ -69,6 +69,11 @@ export default function ProductsAdmin() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Relationship search states
+  const [brandSearchQuery, setBrandSearchQuery] = useState('');
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [carModelSearchQuery, setCarModelSearchQuery] = useState('');
 
   useEffect(() => {
     fetchData();
