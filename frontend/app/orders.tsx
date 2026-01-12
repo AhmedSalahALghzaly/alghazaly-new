@@ -550,27 +550,41 @@ export default function OrdersScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <FlatList
-        data={orders}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[NEON_NIGHT_THEME.primary]}
+      {orders.length > 0 ? (
+        <View style={styles.flashListContainer}>
+          <FlashList
+            data={orders}
+            keyExtractor={(item) => item.id}
+            estimatedItemSize={300}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[NEON_NIGHT_THEME.primary]}
+              />
+            }
+            renderItem={({ item, index }) => (
+              <OrderCard
+                order={item}
+                language={language}
+                isRTL={isRTL}
+                colors={colors}
+                onPress={() => handleOrderPress(item)}
+              />
+            )}
           />
-        }
-        renderItem={({ item, index }) => (
-          <OrderCard
-            order={item}
-            language={language}
-            isRTL={isRTL}
-            colors={colors}
-            onPress={() => handleOrderPress(item)}
-          />
-        )}
-        ListEmptyComponent={
+        </View>
+      ) : (
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[NEON_NIGHT_THEME.primary]}
+            />
+          }
+        >
           <Animated.View entering={FadeIn.duration(500)} style={styles.emptyContainer}>
             <View style={[styles.emptyIcon, { backgroundColor: `${NEON_NIGHT_THEME.primary}20` }]}>
               <Ionicons name="receipt-outline" size={48} color={NEON_NIGHT_THEME.primary} />
@@ -593,8 +607,8 @@ export default function OrdersScreen() {
               </Text>
             </TouchableOpacity>
           </Animated.View>
-        }
-      />
+        </ScrollView>
+      )}
 
       {/* Order Details Modal */}
       <OrderDetailsModal
