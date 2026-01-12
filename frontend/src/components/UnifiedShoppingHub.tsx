@@ -366,14 +366,14 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
 
   // Calculate totals
   const getSubtotal = () => {
-    return cartItems.reduce((sum, item) => {
+    return safeCartItems.reduce((sum, item) => {
       const price = item.final_unit_price || item.product?.price || 0;
       return sum + price * item.quantity;
     }, 0);
   };
 
   const getOriginalTotal = () => {
-    return cartItems.reduce((sum, item) => {
+    return safeCartItems.reduce((sum, item) => {
       const price = item.original_unit_price || item.product?.price || 0;
       return sum + price * item.quantity;
     }, 0);
@@ -381,7 +381,7 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
 
   const getTotalSavings = () => getOriginalTotal() - getSubtotal();
 
-  const getItemCount = () => cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const getItemCount = () => safeCartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   // Submit order
   const handleSubmitOrder = async () => {
@@ -393,7 +393,7 @@ export const UnifiedShoppingHub: React.FC<UnifiedShoppingHubProps> = ({
       return;
     }
 
-    if (cartItems.length === 0) {
+    if (safeCartItems.length === 0) {
       Alert.alert(
         language === 'ar' ? 'السلة فارغة' : 'Cart Empty',
         language === 'ar' ? 'أضف منتجات للسلة أولاً' : 'Add products to cart first'
