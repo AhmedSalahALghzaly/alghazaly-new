@@ -231,11 +231,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         const asset = result.assets[0];
         let imageUrl = '';
         
-        if (asset.base64) {
+        if (asset.uri) {
+          // Apply compression for images > 1MB, preserve PNG format
+          imageUrl = await processImageWithCompression(asset.uri, asset.mimeType || 'image/jpeg');
+        } else if (asset.base64) {
           const mimeType = asset.mimeType || 'image/jpeg';
           imageUrl = `data:${mimeType};base64,${asset.base64}`;
-        } else if (asset.uri) {
-          imageUrl = asset.uri;
         }
 
         if (imageUrl) {
