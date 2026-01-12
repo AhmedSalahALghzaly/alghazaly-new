@@ -223,6 +223,38 @@ class AdminSyncService {
     }
   }
 
+  async updateCategory(categoryId: string, updates: any): Promise<OptimisticResult<any>> {
+    const cacheStore = useDataCacheStore.getState();
+    const appStore = useAppStore.getState();
+    
+    const snapshotId = cacheStore.createSnapshot('Pre-category-update');
+    
+    const updateLocal = (categories: any[]) =>
+      categories.map((c) => (c.id === categoryId ? { ...c, ...updates, _isOptimistic: true } : c));
+    
+    cacheStore.setCategories(updateLocal(cacheStore.categories));
+    appStore.setCategories(updateLocal(appStore.categories));
+    
+    try {
+      const response = await categoryApi.update(categoryId, updates);
+      const serverCategory = response.data;
+      
+      cacheStore.setCategories(
+        cacheStore.categories.map((c) => (c.id === categoryId ? { ...c, ...serverCategory, _isOptimistic: false } : c))
+      );
+      appStore.setCategories(
+        appStore.categories.map((c) => (c.id === categoryId ? { ...c, ...serverCategory, _isOptimistic: false } : c))
+      );
+      cacheStore.deleteSnapshot(snapshotId);
+      
+      console.log('[AdminSync] Category updated successfully:', categoryId);
+      return { success: true, data: serverCategory };
+    } catch (error: any) {
+      cacheStore.restoreSnapshot(snapshotId);
+      return { success: false, error: error.response?.data?.detail || error.message };
+    }
+  }
+
   async deleteCategory(categoryId: string): Promise<OptimisticResult<void>> {
     const cacheStore = useDataCacheStore.getState();
     const appStore = useAppStore.getState();
