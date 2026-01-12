@@ -202,6 +202,7 @@ class SyncService {
   /**
    * Perform a full data sync with Partial Sync support
    * If one resource fails, continues syncing others
+   * Enhanced to save to offline database for persistence
    */
   async performSync() {
     const store = useAppStore.getState();
@@ -247,6 +248,8 @@ class SyncService {
         const carBrands = carBrandsRes.data || [];
         store.setCarBrands(carBrands);
         cacheStore.setCarBrands(carBrands);
+        // Persist to offline database
+        await offlineDatabaseService.saveCarBrands(carBrands);
         syncResults.push({ resource: 'carBrands', success: true, itemCount: carBrands.length, timestamp: Date.now() });
       } catch (error: any) {
         console.error('[SyncService] Failed to sync carBrands:', error.message);
@@ -260,6 +263,8 @@ class SyncService {
         const carModels = carModelsRes.data || [];
         store.setCarModels(carModels);
         cacheStore.setCarModels(carModels);
+        // Persist to offline database
+        await offlineDatabaseService.saveCarModels(carModels);
         syncResults.push({ resource: 'carModels', success: true, itemCount: carModels.length, timestamp: Date.now() });
       } catch (error: any) {
         console.error('[SyncService] Failed to sync carModels:', error.message);
@@ -273,6 +278,8 @@ class SyncService {
         const productBrands = productBrandsRes.data || [];
         store.setProductBrands(productBrands);
         cacheStore.setProductBrands(productBrands);
+        // Persist to offline database
+        await offlineDatabaseService.saveProductBrands(productBrands);
         syncResults.push({ resource: 'productBrands', success: true, itemCount: productBrands.length, timestamp: Date.now() });
       } catch (error: any) {
         console.error('[SyncService] Failed to sync productBrands:', error.message);
@@ -286,6 +293,8 @@ class SyncService {
         const categories = categoriesRes.data || [];
         store.setCategories(categories);
         cacheStore.setCategories(categories);
+        // Persist to offline database
+        await offlineDatabaseService.saveCategories(categories);
         syncResults.push({ resource: 'categories', success: true, itemCount: categories.length, timestamp: Date.now() });
       } catch (error: any) {
         console.error('[SyncService] Failed to sync categories:', error.message);
