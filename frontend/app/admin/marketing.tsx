@@ -1025,32 +1025,34 @@ export default function MarketingSuiteScreen() {
               placeholder={language === 'ar' ? 'بحث...' : 'Search...'}
               placeholderTextColor={colors.textSecondary}
             />
-            <FlatList
-              data={filteredCarModels}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => {
-                const isSelected =
-                  selectorMode === 'promo'
-                    ? promoTargetCarModelId === item.id
-                    : bundleTargetCarModelId === item.id;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.selectorItem,
-                      { backgroundColor: isSelected ? colors.primary + '20' : colors.surface, borderColor: colors.border },
-                    ]}
-                    onPress={() => {
-                      if (selectorMode === 'promo') {
-                        setPromoTargetCarModelId(item.id);
-                      } else {
-                        setBundleTargetCarModelId(item.id);
-                      }
-                      setShowCarModelSelector(false);
-                    }}
-                  >
-                    <View>
-                      <Text style={[styles.selectorItemTitle, { color: colors.text }]}>
-                        {language === 'ar' ? item.name_ar : item.name || item.name}
+            <View style={styles.flashListSelectorContainer}>
+              <FlashList
+                data={filteredCarModels}
+                keyExtractor={(item) => item.id}
+                estimatedItemSize={70}
+                renderItem={({ item }) => {
+                  const isSelected =
+                    selectorMode === 'promo'
+                      ? promoTargetCarModelId === item.id
+                      : bundleTargetCarModelId === item.id;
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.selectorItem,
+                        { backgroundColor: isSelected ? colors.primary + '20' : colors.surface, borderColor: colors.border },
+                      ]}
+                      onPress={() => {
+                        if (selectorMode === 'promo') {
+                          setPromoTargetCarModelId(item.id);
+                        } else {
+                          setBundleTargetCarModelId(item.id);
+                        }
+                        setShowCarModelSelector(false);
+                      }}
+                    >
+                      <View>
+                        <Text style={[styles.selectorItemTitle, { color: colors.text }]}>
+                          {language === 'ar' ? item.name_ar : item.name || item.name}
                       </Text>
                       {item.year_start && item.year_end && (
                         <Text style={[styles.selectorItemSubtitle, { color: colors.textSecondary }]}>
