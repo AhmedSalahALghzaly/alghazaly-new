@@ -1,7 +1,7 @@
 /**
- * Interactive Car Selector - Enhanced Bottom Footer Component
- * Features: Morphing car icon, haptic feedback, SVG brand icons,
- * 5x2 grid layout, floating products panel with filters
+ * Interactive Car Selector - Futuristic Edition
+ * Features: Morphing vehicle icons, Glassmorphism UI, haptic feedback,
+ * Image-based selection, advanced animations with react-native-reanimated
  */
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -19,6 +19,7 @@ import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -27,6 +28,7 @@ import Animated, {
   withTiming,
   withSequence,
   withDelay,
+  withRepeat,
   interpolate,
   Extrapolation,
   runOnJS,
@@ -35,6 +37,8 @@ import Animated, {
   SlideInUp,
   SlideOutDown,
   Layout,
+  Easing,
+  cancelAnimation,
 } from 'react-native-reanimated';
 
 import { useTheme } from '../hooks/useTheme';
@@ -48,11 +52,28 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const GRID_COLUMNS = 5;
 const GRID_ROWS = 2;
 
+// Vehicle icon sequence for morphing animation
+const VEHICLE_ICONS: Array<keyof typeof MaterialCommunityIcons.glyphMap> = [
+  'car-sports',      // Racing Car
+  'car-side',        // Sedan
+  'car-hatchback',   // Hatchback
+  'car-estate',      // SUV
+  'truck',           // Single-Cabin Pickup
+  'truck-plus',      // Double-Cabin Pickup
+  'van-passenger',   // Microbus
+  'bus',             // Bus
+  'truck-cargo-container', // Heavy Truck
+  'tow-truck',       // Tow Truck
+  'excavator',       // Excavator (using similar)
+  'bulldozer',       // Bulldozer
+];
+
 interface CarBrand {
   id: string;
   name: string;
   name_ar?: string;
   logo_url?: string;
+  logo?: string;
 }
 
 interface CarModel {
@@ -62,6 +83,7 @@ interface CarModel {
   brand_id: string;
   year_start?: number;
   year_end?: number;
+  image_url?: string;
 }
 
 interface Product {
@@ -77,6 +99,7 @@ type SelectorState = 'collapsed' | 'brands' | 'models' | 'products';
 type PriceFilter = 'all' | 'low' | 'medium' | 'high';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 export const InteractiveCarSelector: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -96,14 +119,20 @@ export const InteractiveCarSelector: React.FC = () => {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
+  
+  // Morphing icon state
+  const [currentIconIndex, setCurrentIconIndex] = useState(0);
 
   // Animations
   const expandAnim = useSharedValue(0);
   const carIconRotate = useSharedValue(0);
   const carIconScale = useSharedValue(1);
+  const carIconGlow = useSharedValue(0);
   const gridOpacity = useSharedValue(0);
   const productsSlideAnim = useSharedValue(SCREEN_HEIGHT);
   const pulseAnim = useSharedValue(1);
+  const glassOpacity = useSharedValue(0);
+  const morphProgress = useSharedValue(0);
 
   // Haptic feedback helper
   const triggerHaptic = useCallback((type: keyof typeof HAPTIC_PATTERNS = 'selection') => {
@@ -134,40 +163,78 @@ export const InteractiveCarSelector: React.FC = () => {
     }
   }, []);
 
-  // Morphing car animation - rotate and scale on state change
+  // Morphing vehicle icon animation - cycle through vehicle types
   useEffect(() => {
-    if (selectorState !== 'collapsed') {
-      carIconRotate.value = withSequence(
-        withSpring(180, SPRINGS.bouncy),
-        withSpring(360, SPRINGS.gentle)
-      );
-      carIconScale.value = withSequence(
-        withSpring(1.3, SPRINGS.bouncy),
-        withSpring(1.1, SPRINGS.gentle)
-      );
-      // Start pulse animation
-      pulseAnim.value = withRepeat(
+    let morphInterval: NodeJS.Timeout;
+    
+    if (selectorState === 'collapsed') {
+      // Start morphing animation when collapsed
+      morphInterval = setInterval(() => {
+        setCurrentIconIndex((prev) => (prev + 1) % VEHICLE_ICONS.length);
+        // Animate the morph transition
+        morphProgress.value = withSequence(
+          withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) }),
+          withTiming(0, { duration: 150, easing: Easing.in(Easing.cubic) })
+        );
+      }, 2000);
+      
+      // Subtle glow effect
+      carIconGlow.value = withRepeat(
         withSequence(
-          withTiming(1.05, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
+          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.sine) }),
+          withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.sine) })
         ),
         -1,
         true
       );
     } else {
-      carIconRotate.value = withSpring(0, SPRINGS.gentle);
-      carIconScale.value = withSpring(1, SPRINGS.gentle);
+      // Stop morphing when expanded
+      cancelAnimation(carIconGlow);
+      carIconGlow.value = withTiming(0.8, { duration: 300 });
+    }
+    
+    return () => {
+      if (morphInterval) clearInterval(morphInterval);
+    };
+  }, [selectorState]);
+
+  // Expand animation with Glassmorphism
+  useEffect(() => {
+    if (selectorState !== 'collapsed') {
+      carIconRotate.value = withSequence(
+        withSpring(180, { damping: 12, stiffness: 100 }),
+        withSpring(360, { damping: 15, stiffness: 80 })
+      );
+      carIconScale.value = withSequence(
+        withSpring(1.3, { damping: 10, stiffness: 120 }),
+        withSpring(1.1, { damping: 15, stiffness: 100 })
+      );
+      // Pulse animation for expanded state
+      pulseAnim.value = withRepeat(
+        withSequence(
+          withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.sine) }),
+          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.sine) })
+        ),
+        -1,
+        true
+      );
+      glassOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
+    } else {
+      carIconRotate.value = withSpring(0, { damping: 15, stiffness: 80 });
+      carIconScale.value = withSpring(1, { damping: 15, stiffness: 80 });
+      cancelAnimation(pulseAnim);
       pulseAnim.value = 1;
+      glassOpacity.value = withTiming(0, { duration: 300 });
     }
   }, [selectorState]);
 
   // Expand/collapse animation
   useEffect(() => {
     if (selectorState === 'collapsed') {
-      expandAnim.value = withTiming(0, { duration: DURATIONS.transition });
+      expandAnim.value = withTiming(0, { duration: DURATIONS.transition, easing: Easing.out(Easing.cubic) });
       gridOpacity.value = withTiming(0, { duration: DURATIONS.fast });
     } else if (selectorState === 'brands' || selectorState === 'models') {
-      expandAnim.value = withSpring(1, SPRINGS.gentle);
+      expandAnim.value = withSpring(1, { damping: 15, stiffness: 90 });
       gridOpacity.value = withDelay(100, withTiming(1, { duration: DURATIONS.normal }));
     }
   }, [selectorState]);
@@ -175,7 +242,7 @@ export const InteractiveCarSelector: React.FC = () => {
   // Products slide animation
   useEffect(() => {
     if (selectorState === 'products') {
-      productsSlideAnim.value = withSpring(0, SPRINGS.gentle);
+      productsSlideAnim.value = withSpring(0, { damping: 18, stiffness: 90 });
     } else {
       productsSlideAnim.value = withTiming(SCREEN_HEIGHT, { duration: DURATIONS.transition });
     }
@@ -276,22 +343,38 @@ export const InteractiveCarSelector: React.FC = () => {
     : [], [carModels, selectedBrand]);
 
   // Animated styles
-  const carRotation = useAnimatedStyle(() => ({
+  const carRotationStyle = useAnimatedStyle(() => ({
     transform: [
       { rotate: `${carIconRotate.value}deg` },
       { scale: carIconScale.value * pulseAnim.value },
     ],
   }));
 
+  const iconGlowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(carIconGlow.value, [0, 1], [0.3, 0.9]),
+    shadowRadius: interpolate(carIconGlow.value, [0, 1], [4, 16]),
+  }));
+
+  const morphStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(morphProgress.value, [0, 0.5, 1], [1, 0.5, 1]),
+    transform: [
+      { scale: interpolate(morphProgress.value, [0, 0.5, 1], [1, 0.85, 1]) },
+    ],
+  }));
+
   const containerHeight = useAnimatedStyle(() => ({
-    height: interpolate(expandAnim.value, [0, 1], [70, 220], Extrapolation.CLAMP),
+    height: interpolate(expandAnim.value, [0, 1], [70, 240], Extrapolation.CLAMP),
+  }));
+
+  const glassStyle = useAnimatedStyle(() => ({
+    opacity: glassOpacity.value,
   }));
 
   const gridStyle = useAnimatedStyle(() => ({
     opacity: gridOpacity.value,
     transform: [
       {
-        translateY: interpolate(gridOpacity.value, [0, 1], [20, 0], Extrapolation.CLAMP),
+        translateY: interpolate(gridOpacity.value, [0, 1], [30, 0], Extrapolation.CLAMP),
       },
     ],
   }));
@@ -300,25 +383,112 @@ export const InteractiveCarSelector: React.FC = () => {
     transform: [{ translateY: productsSlideAnim.value }],
   }));
 
-  // Get brand icon based on name
-  const getBrandIcon = (brandName: string): string => {
-    const iconMap: Record<string, string> = {
-      toyota: 'car',
-      hyundai: 'car-sport',
-      kia: 'car-side',
-      nissan: 'car-outline',
-      honda: 'car',
-      bmw: 'car-sport',
-      mercedes: 'car-sport',
-      default: 'car',
+  // Interactive item press animation helper
+  const createPressAnimation = (scale: Animated.SharedValue<number>) => {
+    return {
+      onPressIn: () => {
+        scale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
+      },
+      onPressOut: () => {
+        scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+      },
     };
-    const key = brandName.toLowerCase();
-    return iconMap[key] || iconMap.default;
+  };
+
+  // Grid item component with animations
+  const GridItem = ({ item, index, isBrand }: { item: CarBrand | CarModel; index: number; isBrand: boolean }) => {
+    const itemScale = useSharedValue(1);
+    const glowAnim = useSharedValue(0);
+    
+    const itemAnimatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: itemScale.value }],
+    }));
+
+    const itemGlowStyle = useAnimatedStyle(() => ({
+      shadowOpacity: interpolate(glowAnim.value, [0, 1], [0, 0.6]),
+      shadowRadius: interpolate(glowAnim.value, [0, 1], [0, 12]),
+    }));
+
+    const handlePress = () => {
+      triggerHaptic('selection');
+      // Pop animation
+      itemScale.value = withSequence(
+        withSpring(0.9, { damping: 10, stiffness: 400 }),
+        withSpring(1.05, { damping: 8, stiffness: 300 }),
+        withSpring(1, { damping: 12, stiffness: 200 })
+      );
+      // Glow effect
+      glowAnim.value = withSequence(
+        withTiming(1, { duration: 150 }),
+        withTiming(0, { duration: 300 })
+      );
+      
+      setTimeout(() => {
+        isBrand
+          ? handleBrandSelect(item as CarBrand)
+          : handleModelSelect(item as CarModel);
+      }, 100);
+    };
+
+    const brand = item as CarBrand;
+    const model = item as CarModel;
+    const hasImage = isBrand ? (brand.logo_url || brand.logo) : model.image_url;
+
+    return (
+      <Animated.View
+        entering={FadeIn.delay(index * 60).duration(300).springify()}
+        layout={Layout.springify()}
+        style={[itemAnimatedStyle, itemGlowStyle]}
+      >
+        <TouchableOpacity
+          style={[
+            styles.gridItem,
+            {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
+              borderColor: mood?.primary + '40',
+              shadowColor: mood?.primary || colors.primary,
+            },
+          ]}
+          onPress={handlePress}
+          activeOpacity={0.8}
+        >
+          {hasImage ? (
+            <Image
+              source={{ uri: isBrand ? (brand.logo_url || brand.logo) : model.image_url }}
+              style={isBrand ? styles.brandLogo : styles.modelImage}
+              contentFit="contain"
+              transition={200}
+            />
+          ) : (
+            <View style={[styles.placeholderIcon, { backgroundColor: mood?.primary + '20' }]}>
+              <MaterialCommunityIcons
+                name={isBrand ? 'car' : 'car-side'}
+                size={isBrand ? 24 : 28}
+                color={mood?.primary || colors.primary}
+              />
+            </View>
+          )}
+          <Text
+            style={[styles.gridItemText, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {getName(item)}
+          </Text>
+          {!isBrand && model.year_start && (
+            <Text style={[styles.gridItemSubtext, { color: mood?.primary || colors.textSecondary }]}>
+              {model.year_start}{model.year_end ? ` - ${model.year_end}` : '+'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+    );
   };
 
   if (carBrands.length === 0) {
-    return null; // Don't show if no data
+    return null;
   }
+
+  const currentIcon = VEHICLE_ICONS[currentIconIndex];
 
   return (
     <>
@@ -328,35 +498,70 @@ export const InteractiveCarSelector: React.FC = () => {
           styles.container,
           containerHeight,
           {
-            backgroundColor: isDark ? 'rgba(30,30,30,0.98)' : 'rgba(255,255,255,0.98)',
-            borderTopColor: mood?.primary + '30' || colors.border,
+            borderTopColor: mood?.primary + '50' || colors.border,
           },
         ]}
       >
-        {/* Gradient overlay */}
-        <LinearGradient
-          colors={[
-            'transparent',
-            (mood?.primary || colors.primary) + '08',
+        {/* Glassmorphism Background */}
+        <Animated.View style={[StyleSheet.absoluteFill, glassStyle]}>
+          <BlurView
+            intensity={isDark ? 40 : 60}
+            tint={isDark ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Glass overlay with gradient border glow */}
+          <LinearGradient
+            colors={[
+              mood?.primary + '15' || 'rgba(0,150,136,0.08)',
+              'transparent',
+              mood?.primary + '10' || 'rgba(0,150,136,0.05)',
+            ]}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+        </Animated.View>
+
+        {/* Collapsed state background */}
+        {selectorState === 'collapsed' && (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: isDark ? 'rgba(20,20,20,0.95)' : 'rgba(255,255,255,0.95)' },
+            ]}
+          />
+        )}
+
+        {/* Neon border glow effect */}
+        <Animated.View
+          style={[
+            styles.neonBorder,
+            {
+              backgroundColor: mood?.primary || colors.primary,
+              shadowColor: mood?.primary || colors.primary,
+            },
+            iconGlowStyle,
           ]}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
         />
 
         {/* Anchor Button Row */}
         <View style={[styles.anchorRow, isRTL && styles.anchorRowRTL]}>
-          {/* Morphing Car Button */}
+          {/* Morphing Car Button with Glow */}
           <AnimatedTouchable
             style={[
               styles.anchorButton,
-              { backgroundColor: mood?.primary || colors.primary },
+              {
+                backgroundColor: mood?.primary || colors.primary,
+                shadowColor: mood?.primary || colors.primary,
+              },
+              iconGlowStyle,
             ]}
             onPress={handleAnchorPress}
             activeOpacity={0.8}
           >
-            <Animated.View style={carRotation}>
+            <Animated.View style={[carRotationStyle, morphStyle]}>
               <MaterialCommunityIcons
-                name={selectorState === 'collapsed' ? 'car-sports' : 'close'}
+                name={selectorState === 'collapsed' ? currentIcon : 'close'}
                 size={28}
                 color="#FFF"
               />
@@ -367,19 +572,30 @@ export const InteractiveCarSelector: React.FC = () => {
           {selectorState !== 'collapsed' && (
             <Animated.View
               style={[styles.breadcrumb, gridStyle, isRTL && styles.breadcrumbRTL]}
-              entering={FadeIn.duration(200)}
+              entering={FadeIn.duration(250).springify()}
               exiting={FadeOut.duration(150)}
             >
               {selectedBrand && (
                 <TouchableOpacity
-                  style={[styles.breadcrumbItem, { backgroundColor: mood?.primary + '15' }]}
+                  style={[styles.breadcrumbItem, { 
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                    borderColor: mood?.primary + '40',
+                  }]}
                   onPress={handleBackToBrands}
                 >
-                  <MaterialCommunityIcons
-                    name={getBrandIcon(selectedBrand.name) as any}
-                    size={14}
-                    color={mood?.primary || colors.primary}
-                  />
+                  {(selectedBrand.logo_url || selectedBrand.logo) ? (
+                    <Image
+                      source={{ uri: selectedBrand.logo_url || selectedBrand.logo }}
+                      style={styles.breadcrumbLogo}
+                      contentFit="contain"
+                    />
+                  ) : (
+                    <MaterialCommunityIcons
+                      name="car"
+                      size={14}
+                      color={mood?.primary || colors.primary}
+                    />
+                  )}
                   <Text style={[styles.breadcrumbText, { color: mood?.primary || colors.primary }]}>
                     {getName(selectedBrand)}
                   </Text>
@@ -388,7 +604,10 @@ export const InteractiveCarSelector: React.FC = () => {
               )}
               {selectedModel && (
                 <TouchableOpacity
-                  style={[styles.breadcrumbItem, { backgroundColor: mood?.primary + '25' }]}
+                  style={[styles.breadcrumbItem, { 
+                    backgroundColor: mood?.primary + '25',
+                    borderColor: mood?.primary + '60',
+                  }]}
                   onPress={handleBackToModels}
                 >
                   <Text style={[styles.breadcrumbText, { color: mood?.primary || colors.primary }]}>
@@ -401,18 +620,26 @@ export const InteractiveCarSelector: React.FC = () => {
 
           {/* Hint text when collapsed */}
           {selectorState === 'collapsed' && (
-            <Animated.View style={styles.hintContainer} entering={FadeIn} exiting={FadeOut}>
-              <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-                {language === 'ar' ? 'اختر سيارتك' : 'Select Your Car'}
+            <Animated.View 
+              style={styles.hintContainer} 
+              entering={FadeIn.duration(300)} 
+              exiting={FadeOut.duration(200)}
+            >
+              <Text style={[styles.hintText, { color: colors.text }]}>
+                {language === 'ar' ? 'اختر سيارتك' : 'Choose Your Car'}
               </Text>
-              <Animated.View style={{ transform: [{ rotate: '180deg' }] }}>
-                <Ionicons name="chevron-down" size={16} color={mood?.primary || colors.primary} />
+              <Animated.View style={[styles.hintChevron, iconGlowStyle]}>
+                <Ionicons 
+                  name="chevron-up" 
+                  size={20} 
+                  color={mood?.primary || colors.primary} 
+                />
               </Animated.View>
             </Animated.View>
           )}
         </View>
 
-        {/* Grid Container */}
+        {/* Grid Container with Glassmorphism */}
         {(selectorState === 'brands' || selectorState === 'models') && (
           <Animated.View style={[styles.gridContainer, gridStyle]}>
             <ScrollView
@@ -422,64 +649,25 @@ export const InteractiveCarSelector: React.FC = () => {
             >
               <View style={styles.grid}>
                 {(selectorState === 'brands' ? displayBrands : filteredModels).map((item, index) => (
-                  <Animated.View
+                  <GridItem
                     key={item.id}
-                    entering={FadeIn.delay(index * 40).duration(200)}
-                    layout={Layout.springify()}
-                  >
-                    <TouchableOpacity
-                      style={[
-                        styles.gridItem,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: mood?.primary + '30',
-                        },
-                      ]}
-                      onPress={() => {
-                        triggerHaptic('selection');
-                        selectorState === 'brands'
-                          ? handleBrandSelect(item as CarBrand)
-                          : handleModelSelect(item as CarModel);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      {selectorState === 'brands' && (item as CarBrand).logo_url ? (
-                        <Image
-                          source={{ uri: (item as CarBrand).logo_url }}
-                          style={styles.brandLogo}
-                          resizeMode="contain"
-                        />
-                      ) : (
-                        <View style={[styles.brandIconContainer, { backgroundColor: mood?.primary + '15' }]}>
-                          <MaterialCommunityIcons
-                            name={selectorState === 'brands' ? 'car' : 'car-side'}
-                            size={20}
-                            color={mood?.primary || colors.primary}
-                          />
-                        </View>
-                      )}
-                      <Text
-                        style={[styles.gridItemText, { color: colors.text }]}
-                        numberOfLines={1}
-                      >
-                        {getName(item)}
-                      </Text>
-                      {selectorState === 'models' && (item as CarModel).year_start && (
-                        <Text style={[styles.gridItemSubtext, { color: colors.textSecondary }]}>
-                          {(item as CarModel).year_start}-{(item as CarModel).year_end}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  </Animated.View>
+                    item={item}
+                    index={index}
+                    isBrand={selectorState === 'brands'}
+                  />
                 ))}
 
                 {/* View All button */}
-                <Animated.View entering={FadeIn.delay(400).duration(200)}>
+                <Animated.View entering={FadeIn.delay(500).duration(300).springify()}>
                   <TouchableOpacity
                     style={[
                       styles.gridItem,
                       styles.viewAllItem,
-                      { backgroundColor: mood?.primary + '10', borderColor: mood?.primary },
+                      { 
+                        backgroundColor: mood?.primary + '15', 
+                        borderColor: mood?.primary,
+                        shadowColor: mood?.primary,
+                      },
                     ]}
                     onPress={() => {
                       triggerHaptic('light');
@@ -491,10 +679,10 @@ export const InteractiveCarSelector: React.FC = () => {
                       setSelectorState('collapsed');
                     }}
                   >
-                    <View style={[styles.brandIconContainer, { backgroundColor: mood?.primary + '20' }]}>
-                      <Ionicons name="grid" size={20} color={mood?.primary || colors.primary} />
+                    <View style={[styles.placeholderIcon, { backgroundColor: mood?.primary + '25' }]}>
+                      <Ionicons name="grid" size={22} color={mood?.primary || colors.primary} />
                     </View>
-                    <Text style={[styles.gridItemText, { color: mood?.primary || colors.primary }]}>
+                    <Text style={[styles.gridItemText, { color: mood?.primary || colors.primary, fontWeight: '700' }]}>
                       {language === 'ar' ? 'عرض الكل' : 'View All'}
                     </Text>
                   </TouchableOpacity>
@@ -505,40 +693,60 @@ export const InteractiveCarSelector: React.FC = () => {
         )}
       </Animated.View>
 
-      {/* Products Floating Panel */}
+      {/* Products Floating Panel with Glassmorphism */}
       <Animated.View
         style={[
           styles.productsPanel,
           productsPanelStyle,
-          { backgroundColor: colors.background },
         ]}
       >
-        {/* Header with gradient */}
+        {/* Glassmorphism Background */}
+        <BlurView
+          intensity={isDark ? 50 : 70}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.85)' }]} />
+
+        {/* Header with gradient glow */}
         <LinearGradient
-          colors={[(mood?.primary || colors.primary) + '15', 'transparent']}
+          colors={[
+            mood?.primary + '30' || colors.primary + '20',
+            'transparent',
+          ]}
           style={styles.productsPanelHeaderGradient}
         >
-          <View style={[styles.productsPanelHeader, { borderBottomColor: colors.border }]}>
+          <View style={[styles.productsPanelHeader, { borderBottomColor: mood?.primary + '30' }]}>
             <TouchableOpacity
-              style={[styles.backButton, { backgroundColor: colors.surface }]}
+              style={[styles.backButton, { 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                borderColor: mood?.primary + '40',
+              }]}
               onPress={handleBackToModels}
             >
               <Ionicons
                 name={isRTL ? 'chevron-forward' : 'chevron-back'}
                 size={24}
-                color={colors.text}
+                color={mood?.primary || colors.text}
               />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>
                 {selectedModel ? getName(selectedModel) : ''}
               </Text>
-              <Text style={[styles.headerSubtitle, { color: mood?.primary || colors.primary }]}>
-                {filteredProducts.length} {language === 'ar' ? 'منتج' : 'products'}
-              </Text>
+              <View style={styles.headerSubtitleRow}>
+                <View style={[styles.productCountBadge, { backgroundColor: mood?.primary + '25' }]}>
+                  <Text style={[styles.headerSubtitle, { color: mood?.primary || colors.primary }]}>
+                    {filteredProducts.length} {language === 'ar' ? 'منتج' : 'products'}
+                  </Text>
+                </View>
+              </View>
             </View>
             <TouchableOpacity
-              style={[styles.closeButton, { backgroundColor: colors.error + '15' }]}
+              style={[styles.closeButton, { 
+                backgroundColor: colors.error + '20',
+                borderColor: colors.error + '40',
+              }]}
               onPress={() => {
                 triggerHaptic('light');
                 setSelectorState('collapsed');
@@ -550,8 +758,14 @@ export const InteractiveCarSelector: React.FC = () => {
         </LinearGradient>
 
         {/* Search & Filters */}
-        <View style={[styles.filtersRow, { backgroundColor: colors.card }]}>
-          <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: mood?.primary + '40' }]}>
+        <View style={[styles.filtersRow, { 
+          backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+          borderBottomColor: mood?.primary + '20',
+        }]}>
+          <View style={[styles.searchBox, { 
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', 
+            borderColor: mood?.primary + '50',
+          }]}>
             <Ionicons name="search" size={18} color={mood?.primary || colors.primary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text, textAlign: isRTL ? 'right' : 'left' }]}
@@ -567,39 +781,40 @@ export const InteractiveCarSelector: React.FC = () => {
             )}
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(['all', 'low', 'medium', 'high'] as const).map((filter) => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor: priceFilter === filter ? mood?.primary || colors.primary : colors.surface,
-                    borderColor: priceFilter === filter ? mood?.primary || colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => {
-                  triggerHaptic('selection');
-                  setPriceFilter(filter);
-                }}
-              >
-                <Text
+            {(['all', 'low', 'medium', 'high'] as const).map((filter) => {
+              const isActive = priceFilter === filter;
+              return (
+                <TouchableOpacity
+                  key={filter}
                   style={[
-                    styles.filterChipText,
-                    { color: priceFilter === filter ? '#FFF' : colors.text },
+                    styles.filterChip,
+                    {
+                      backgroundColor: isActive ? mood?.primary || colors.primary : 'transparent',
+                      borderColor: isActive ? mood?.primary || colors.primary : mood?.primary + '50',
+                    },
                   ]}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    setPriceFilter(filter);
+                  }}
                 >
-                  {filter === 'all'
-                    ? language === 'ar'
-                      ? 'الكل'
-                      : 'All'
-                    : filter === 'low'
-                    ? '<100'
-                    : filter === 'medium'
-                    ? '100-500'
-                    : '>500'}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: isActive ? '#FFF' : colors.text },
+                    ]}
+                  >
+                    {filter === 'all'
+                      ? language === 'ar' ? 'الكل' : 'All'
+                      : filter === 'low'
+                      ? '<100'
+                      : filter === 'medium'
+                      ? '100-500'
+                      : '>500'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
 
@@ -614,7 +829,7 @@ export const InteractiveCarSelector: React.FC = () => {
           </View>
         ) : filteredProducts.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="cube-outline" size={48} color={colors.textSecondary} />
+            <Ionicons name="cube-outline" size={56} color={mood?.primary + '60'} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {language === 'ar' ? 'لا توجد منتجات' : 'No products found'}
             </Text>
@@ -630,59 +845,73 @@ export const InteractiveCarSelector: React.FC = () => {
             windowSize={5}
             initialNumToRender={6}
             getItemLayout={(_, index) => ({
-              length: 180,
-              offset: 180 * Math.floor(index / 2),
+              length: 190,
+              offset: 190 * Math.floor(index / 2),
               index,
             })}
-            renderItem={({ item, index }: { item: Product; index: number }) => (
-              <Animated.View
-                entering={FadeIn.delay(Math.min(index * 30, 300)).duration(200)}
-                layout={Layout.springify()}
-                style={styles.productCardWrapper}
-              >
-                <TouchableOpacity
-                  style={[
-                    styles.productCard,
-                    { backgroundColor: colors.card, borderColor: mood?.primary + '20' },
-                  ]}
-                  onPress={() => handleProductPress(item.id)}
-                  activeOpacity={0.7}
+            renderItem={({ item, index }: { item: Product; index: number }) => {
+              const itemScale = useSharedValue(1);
+              
+              const productCardStyle = useAnimatedStyle(() => ({
+                transform: [{ scale: itemScale.value }],
+              }));
+
+              return (
+                <Animated.View
+                  entering={FadeIn.delay(Math.min(index * 40, 300)).duration(250).springify()}
+                  layout={Layout.springify()}
+                  style={[styles.productCardWrapper, productCardStyle]}
                 >
-                  {item.image_url ? (
-                    <Image 
-                      source={{ uri: item.image_url }} 
-                      style={styles.productImage}
-                      contentFit="cover"
-                      cachePolicy="disk"
-                      transition={200}
-                    />
-                  ) : (
-                    <View style={[styles.productImagePlaceholder, { backgroundColor: mood?.primary + '10' }]}>
-                      <Ionicons name="cube-outline" size={32} color={mood?.primary || colors.textSecondary} />
+                  <TouchableOpacity
+                    style={[
+                      styles.productCard,
+                      { 
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)', 
+                        borderColor: mood?.primary + '30',
+                        shadowColor: mood?.primary,
+                      },
+                    ]}
+                    onPressIn={() => {
+                      itemScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+                    }}
+                    onPressOut={() => {
+                      itemScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+                    }}
+                    onPress={() => handleProductPress(item.id)}
+                    activeOpacity={0.9}
+                  >
+                    {item.image_url ? (
+                      <Image 
+                        source={{ uri: item.image_url }} 
+                        style={styles.productImage}
+                        contentFit="cover"
+                        cachePolicy="disk"
+                        transition={200}
+                      />
+                    ) : (
+                      <View style={[styles.productImagePlaceholder, { backgroundColor: mood?.primary + '15' }]}>
+                        <Ionicons name="cube-outline" size={36} color={mood?.primary || colors.textSecondary} />
+                      </View>
+                    )}
+                    <View style={styles.productInfo}>
+                      <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
+                        {getName(item)}
+                      </Text>
+                      <View style={[styles.priceTag, { backgroundColor: mood?.primary + '20' }]}>
+                        <Text style={[styles.productPrice, { color: mood?.primary || colors.primary }]}>
+                          {item.price?.toFixed(2)} {language === 'ar' ? 'ج.م' : 'EGP'}
+                        </Text>
+                      </View>
                     </View>
-                  )}
-                  <View style={styles.productInfo}>
-                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
-                      {getName(item)}
-                    </Text>
-                    <Text style={[styles.productPrice, { color: mood?.primary || colors.primary }]}>
-                      {item.price?.toFixed(2)} {language === 'ar' ? 'ج.م' : 'EGP'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            )}
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            }}
           />
         )}
       </Animated.View>
     </>
   );
-};
-
-// Helper for repeat animation
-const withRepeat = (animation: any, numberOfReps: number, reverse: boolean) => {
-  'worklet';
-  return animation;
 };
 
 const styles = StyleSheet.create({
@@ -695,38 +924,49 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     overflow: 'hidden',
   },
+  neonBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    shadowOffset: { width: 0, height: 0 },
+  },
   anchorRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    gap: 12,
+    gap: 14,
   },
   anchorRowRTL: {
     flexDirection: 'row-reverse',
   },
   anchorButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
   hintContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 10,
   },
   hintText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  hintChevron: {
+    shadowOffset: { width: 0, height: 0 },
   },
   breadcrumb: {
     flex: 1,
@@ -743,7 +983,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
+    borderWidth: 1,
     gap: 6,
+  },
+  breadcrumbLogo: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
   },
   breadcrumbText: {
     fontSize: 13,
@@ -761,26 +1007,36 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   gridItem: {
-    width: 75,
-    height: 85,
-    borderRadius: 14,
+    width: 80,
+    height: 95,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    padding: 6,
+    padding: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   viewAllItem: {
     borderWidth: 2,
     borderStyle: 'dashed',
   },
   brandLogo: {
-    width: 32,
-    height: 32,
-  },
-  brandIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 8,
+  },
+  modelImage: {
+    width: 44,
+    height: 32,
+    borderRadius: 6,
+  },
+  placeholderIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -792,8 +1048,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   gridItemSubtext: {
-    fontSize: 8,
+    fontSize: 9,
     marginTop: 2,
+    fontWeight: '500',
   },
   productsPanel: {
     position: 'absolute',
@@ -804,7 +1061,7 @@ const styles = StyleSheet.create({
     zIndex: 2000,
   },
   productsPanelHeaderGradient: {
-    paddingTop: 50, // Safe area
+    paddingTop: 50,
   },
   productsPanelHeader: {
     flexDirection: 'row',
@@ -819,6 +1076,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
   headerTitleContainer: {
     flex: 1,
@@ -827,11 +1085,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  headerSubtitleRow: {
+    marginTop: 4,
+  },
+  productCountBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   headerSubtitle: {
     fontSize: 13,
     fontWeight: '600',
-    marginTop: 2,
   },
   closeButton: {
     width: 44,
@@ -839,19 +1105,21 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
   filtersRow: {
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 10,
+    borderBottomWidth: 1,
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: 14,
+    borderWidth: 1.5,
     gap: 10,
     marginBottom: 10,
   },
@@ -861,11 +1129,11 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    marginRight: 10,
   },
   filterChipText: {
     fontSize: 13,
@@ -884,10 +1152,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: 16,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
   },
   productsGrid: {
@@ -898,31 +1166,41 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   productCard: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
     overflow: 'hidden',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   productImage: {
     width: '100%',
-    height: 110,
+    height: 115,
   },
   productImagePlaceholder: {
     width: '100%',
-    height: 110,
+    height: 115,
     alignItems: 'center',
     justifyContent: 'center',
   },
   productInfo: {
-    padding: 10,
+    padding: 12,
   },
   productName: {
     fontSize: 13,
     fontWeight: '500',
-    marginBottom: 6,
+    marginBottom: 8,
     minHeight: 36,
   },
+  priceTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
   productPrice: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
 });
