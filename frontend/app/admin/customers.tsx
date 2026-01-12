@@ -77,7 +77,7 @@ export default function CustomersAdmin() {
           counts[userId] = countRes.data?.count || 0;
           
           // Also fetch order status info
-          const ordersRes = await api.get(`/admin/customer/${userId}/orders`);
+          const ordersRes = await api.get(`/customers/admin/customer/${userId}/orders`);
           const orders = ordersRes.data?.orders || [];
           
           const activeStatuses = ['pending', 'confirmed', 'preparing', 'shipped', 'out_for_delivery'];
