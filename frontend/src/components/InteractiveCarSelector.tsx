@@ -212,13 +212,13 @@ export const InteractiveCarSelector: React.FC = () => {
       // Pulse animation for expanded state
       pulseAnim.value = withRepeat(
         withSequence(
-          withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.sine) }),
-          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.sine) })
+          withTiming(1.08, { duration: 1200 }),
+          withTiming(1, { duration: 1200 })
         ),
         -1,
         true
       );
-      glassOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) });
+      glassOpacity.value = withTiming(1, { duration: 400 });
     } else {
       carIconRotate.value = withSpring(0, { damping: 15, stiffness: 80 });
       carIconScale.value = withSpring(1, { damping: 15, stiffness: 80 });
@@ -231,7 +231,7 @@ export const InteractiveCarSelector: React.FC = () => {
   // Expand/collapse animation
   useEffect(() => {
     if (selectorState === 'collapsed') {
-      expandAnim.value = withTiming(0, { duration: DURATIONS.transition, easing: Easing.out(Easing.cubic) });
+      expandAnim.value = withTiming(0, { duration: DURATIONS.transition });
       gridOpacity.value = withTiming(0, { duration: DURATIONS.fast });
     } else if (selectorState === 'brands' || selectorState === 'models') {
       expandAnim.value = withSpring(1, { damping: 15, stiffness: 90 });
