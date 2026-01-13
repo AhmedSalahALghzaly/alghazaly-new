@@ -49,6 +49,18 @@ async def create_promotion(data: PromotionCreate, request: Request):
     }
     await db.promotions.insert_one(doc)
     await manager.broadcast({"type": "sync", "tables": ["promotions"]})
+    
+    # Send notification to all users about new promotion
+    if data.is_active:
+        await create_promotional_notification(
+            title=f"New Offer: {data.title}",
+            title_ar=f"عرض جديد: {data.title_ar or data.title}",
+            message=data.description or "Check out our latest promotion!",
+            message_ar=data.description_ar or "اطلع على أحدث عروضنا!",
+            image_url=data.image,
+            promotion_id=doc["_id"]
+        )
+    
     return serialize_doc(doc)
 
 @router.put("/{promotion_id}")
