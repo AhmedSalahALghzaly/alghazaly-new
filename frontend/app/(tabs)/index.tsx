@@ -336,6 +336,21 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Glassblur Background Effect */}
+      <View style={styles.blurBackgroundContainer}>
+        <LinearGradient
+          colors={['#1a1a2e', '#16213e', '#0f3460']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <BlurView
+          intensity={80}
+          tint="dark"
+          style={[StyleSheet.absoluteFill, styles.blurOverlay]}
+        />
+      </View>
+      
       <Header showBack={false} />
       
       <ScrollView
