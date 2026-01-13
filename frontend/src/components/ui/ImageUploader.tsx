@@ -548,9 +548,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  transparentBackground: {
-    backgroundColor: 'transparent',
-  },
   removeButton: {
     position: 'absolute',
     top: -6,
