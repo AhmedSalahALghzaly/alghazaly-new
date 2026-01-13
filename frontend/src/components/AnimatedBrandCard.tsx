@@ -186,6 +186,7 @@ export const AnimatedBrandCard: React.FC<AnimatedBrandCardProps> = ({
               source={{ uri: brandImageUrl }}
               style={styles.brandImage}
               contentFit="contain"
+              backgroundColor="transparent"
               cachePolicy="disk"
               transition={200}
             />
